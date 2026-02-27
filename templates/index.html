@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Payback Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="14" stroke="#F4A261" stroke-width="2.5"/>
+                <circle cx="16" cy="16" r="6" fill="#F4A261"/>
+                <line x1="16" y1="0" x2="16" y2="6" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="16" y1="26" x2="16" y2="32" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="0" y1="16" x2="6" y2="16" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="26" y1="16" x2="32" y2="16" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="4.7" y1="4.7" x2="8.9" y2="8.9" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="23.1" y1="23.1" x2="27.3" y2="27.3" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="4.7" y1="27.3" x2="8.9" y2="23.1" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="23.1" y1="8.9" x2="27.3" y2="4.7" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <h1>Solar Payback Calculator</h1>
+        </div>
+        <p class="subtitle">Estimate your solar savings under California NEM 3.0</p>
+    </div>
+</header>
+
+<main class="container">
+
+    {% if error %}
+    <div class="error-banner">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/" id="calc-form">
+        <div class="card form-card">
+            <h2>System Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="system_kw">System Size (kW)</label>
+                    <input type="number" id="system_kw" name="system_kw"
+                           value="{{ form.system_kw }}"
+                           placeholder="e.g. 8" min="0.5" max="50" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="monthly_bill">Avg. Monthly Electric Bill ($)</label>
+                    <input type="number" id="monthly_bill" name="monthly_bill"
+                           value="{{ form.monthly_bill }}"
+                           placeholder="e.g. 250" min="1" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="zip_code">Zip Code</label>
+                    <input type="text" id="zip_code" name="zip_code"
+                           value="{{ form.zip_code }}"
+                           placeholder="e.g. 90210" maxlength="5" pattern="\d{5}" required>
+                </div>
+                <div class="form-group">
+                    <label for="battery">Battery Storage</label>
+                    <select id="battery" name="battery">
+                        {% for key, label in battery_options %}
+                        <option value="{{ key }}" {% if form.battery == key %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" id="custom-battery-group" style="display:none;">
+                    <label for="custom_battery_kwh">Custom Battery Size (kWh)</label>
+                    <input type="number" id="custom_battery_kwh" name="custom_battery_kwh"
+                           value="{{ form.custom_battery_kwh }}"
+                           placeholder="e.g. 10" min="0" step="0.1">
+                </div>
+            </div>
+
+            <!-- Advanced Settings -->
+            <details class="advanced-settings" {% if form.cost_per_watt != '2.75' or form.loan_term != '20' or form.loan_apr != '5.5' or form.rate_escalation != '4.0' or form.panel_degradation != '0.5' %}open{% endif %}>
+                <summary>Advanced Settings</summary>
+                <div class="form-grid advanced-grid">
+                    <div class="form-group">
+                        <label for="cost_per_watt">System Cost ($/watt)</label>
+                        <input type="number" id="cost_per_watt" name="cost_per_watt"
+                               value="{{ form.cost_per_watt }}"
+                               min="1.50" max="5.00" step="0.05">
+                    </div>
+                    <div class="form-group">
+                        <label for="loan_term">Loan Term (years)</label>
+                        <input type="number" id="loan_term" name="loan_term"
+                               value="{{ form.loan_term }}"
+                               min="5" max="30" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="loan_apr">Loan APR (%)</label>
+                        <input type="number" id="loan_apr" name="loan_apr"
+                               value="{{ form.loan_apr }}"
+                               min="0" max="12" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="rate_escalation">Electricity Rate Escalation (%/yr)</label>
+                        <input type="number" id="rate_escalation" name="rate_escalation"
+                               value="{{ form.rate_escalation }}"
+                               min="0" max="10" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="panel_degradation">Panel Degradation (%/yr)</label>
+                        <input type="number" id="panel_degradation" name="panel_degradation"
+                               value="{{ form.panel_degradation }}"
+                               min="0" max="2" step="0.1">
+                    </div>
+                </div>
+            </details>
+
+            <button type="submit" class="btn-calculate">Calculate Payback</button>
+        </div>
+    </form>
+
+    {% if results %}
+    <section id="results">
+        <!-- Payback headline -->
+        <div class="card payback-card">
+            <p class="payback-label">Estimated Payback Period</p>
+            <p class="payback-value">{{ results.payback_display }}</p>
+            <p class="payback-meta">
+                {{ results.utility }} &middot; {{ results.plan_name }} &middot;
+                {{ results.peak_sun_hours }} avg. peak sun hours/day
+            </p>
+        </div>
+
+        <!-- Stats cards -->
+        <div class="stats-grid">
+            <div class="card stat-card">
+                <p class="stat-label">Monthly Production</p>
+                <p class="stat-value">{{ "{:,.0f}".format(results.monthly_production_kwh) }} <span>kWh</span></p>
+            </div>
+            <div class="card stat-card">
+                <p class="stat-label">Electricity Offset</p>
+                <p class="stat-value">{{ results.offset_pct }}%</p>
+            </div>
+            <div class="card stat-card">
+                <p class="stat-label">Year 1 Savings</p>
+                <p class="stat-value">${{ "{:,.0f}".format(results.year1_savings) }}</p>
+            </div>
+            <div class="card stat-card">
+                <p class="stat-label">Net System Cost</p>
+                <p class="stat-value">${{ "{:,.0f}".format(results.total_cost) }}</p>
+            </div>
+            <div class="card stat-card">
+                <p class="stat-label">Monthly Loan Payment</p>
+                <p class="stat-value">${{ "{:,.0f}".format(results.monthly_payment) }}</p>
+            </div>
+            <div class="card stat-card">
+                <p class="stat-label">Self-Consumption</p>
+                <p class="stat-value">{{ results.self_consumption_ratio }}%</p>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card chart-card">
+            <h2>20-Year Cumulative Cost Comparison</h2>
+            <div class="chart-container">
+                <canvas id="payback-chart"></canvas>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+</main>
+
+<footer>
+    <div class="container">
+        <p>Estimates only. Actual results vary based on roof orientation, shading, utility rates, and other factors.</p>
+        <p class="footer-note">California NEM 3.0 &middot; PG&amp;E &amp; SCE Territories</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+{% if chart_data %}
+<script>
+    renderPaybackChart({{ chart_data | safe }});
+</script>
+{% endif %}
+
+</body>
+</html>
