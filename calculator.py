@@ -34,10 +34,11 @@ class SolarResults:
     offset_pct: float
 
     # Financial
+    financing_type: str  # "loan" or "cash"
     system_cost: float
     battery_cost: float
     total_cost: float
-    monthly_payment: float
+    monthly_payment: float  # 0 for cash purchase
     year1_savings: float
 
     # Self-consumption
@@ -59,6 +60,7 @@ def calculate(
     zip_code: str,
     battery_key: str,
     custom_battery_kwh: float = 0,
+    financing_type: str = "loan",  # "loan" or "cash"
     # Advanced settings
     cost_per_watt: float = 2.75,
     loan_term_years: int = 20,
@@ -116,14 +118,17 @@ def calculate(
     system_cost = system_kw * 1000 * cost_per_watt
     total_cost = system_cost + battery_cost
 
-    monthly_rate = loan_apr / 100 / 12
-    n_payments = loan_term_years * 12
-    if monthly_rate > 0:
-        monthly_payment = total_cost * (
-            monthly_rate * (1 + monthly_rate) ** n_payments
-        ) / ((1 + monthly_rate) ** n_payments - 1)
+    if financing_type == "cash":
+        monthly_payment = 0.0
     else:
-        monthly_payment = total_cost / n_payments
+        monthly_rate = loan_apr / 100 / 12
+        n_payments = loan_term_years * 12
+        if monthly_rate > 0:
+            monthly_payment = total_cost * (
+                monthly_rate * (1 + monthly_rate) ** n_payments
+            ) / ((1 + monthly_rate) ** n_payments - 1)
+        else:
+            monthly_payment = total_cost / n_payments
 
     # ------------------------------------------------------------------
     # 7. 20-year projection
@@ -135,9 +140,11 @@ def calculate(
 
     years = list(range(0, 21))
     cumulative_no_solar = [0.0]
-    cumulative_solar = [0.0]
+    # Cash purchase: upfront payment at year 0; loan: payments spread over time
+    initial_solar_cost = round(total_cost, 2) if financing_type == "cash" else 0.0
+    cumulative_solar = [initial_solar_cost]
     cum_ns = 0.0
-    cum_s = 0.0
+    cum_s = initial_solar_cost
     payback_years = None
     year1_savings = 0.0
 
@@ -174,8 +181,8 @@ def calculate(
         # --- Residual grid cost ---
         residual_grid = max(0, no_solar_annual - total_savings)
 
-        # --- Loan payment (only during loan term) ---
-        loan_annual = monthly_payment * 12 if yr <= loan_term_years else 0
+        # --- Loan payment (only during loan term; zero for cash purchase) ---
+        loan_annual = monthly_payment * 12 if (financing_type == "loan" and yr <= loan_term_years) else 0
 
         # --- Total with-solar cost ---
         solar_annual = loan_annual + residual_grid
@@ -228,6 +235,7 @@ def calculate(
         monthly_production_kwh=round(monthly_production, 0),
         annual_consumption_kwh=round(annual_consumption, 0),
         offset_pct=round(offset_pct, 1),
+        financing_type=financing_type,
         system_cost=round(system_cost, 2),
         battery_cost=round(battery_cost, 2),
         total_cost=round(total_cost, 2),

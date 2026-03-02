@@ -2,7 +2,7 @@
    Solar Payback Calculator — Client-side JS
    ========================================================================== */
 
-// Toggle custom battery input visibility
+// Toggle custom battery input visibility and loan fields
 document.addEventListener("DOMContentLoaded", function () {
     var batterySelect = document.getElementById("battery");
     var customGroup = document.getElementById("custom-battery-group");
@@ -18,10 +18,60 @@ document.addEventListener("DOMContentLoaded", function () {
     batterySelect.addEventListener("change", toggleCustom);
     toggleCustom(); // run on load
 
-    // Smooth scroll to results after form submission
-    var results = document.getElementById("results");
-    if (results) {
-        results.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Toggle loan-specific fields based on financing type selection
+    var financingRadios = document.querySelectorAll('input[name="financing_type"]');
+    var loanFields = document.querySelectorAll(".loan-field");
+
+    function toggleLoanFields() {
+        var isCash = document.querySelector('input[name="financing_type"]:checked').value === "cash";
+        loanFields.forEach(function (el) {
+            el.style.display = isCash ? "none" : "";
+        });
+    }
+
+    financingRadios.forEach(function (radio) {
+        radio.addEventListener("change", toggleLoanFields);
+    });
+    toggleLoanFields(); // run on load
+
+    // Completion notification: play sound and show banner
+    var banner = document.getElementById("calc-complete-banner");
+    if (banner) {
+        // Brief visible notification, then fade out
+        setTimeout(function () {
+            banner.classList.add("calc-complete-banner--fade");
+        }, 2500);
+
+        // Play a short chime using the Web Audio API
+        try {
+            var AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                var ctx = new AudioCtx();
+                var notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach(function (freq, i) {
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = "sine";
+                    osc.frequency.value = freq;
+                    var start = ctx.currentTime + i * 0.15;
+                    gain.gain.setValueAtTime(0, start);
+                    gain.gain.linearRampToValueAtTime(0.18, start + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+                    osc.start(start);
+                    osc.stop(start + 0.36);
+                });
+            }
+        } catch (e) {
+            // Audio not available — silently skip
+        }
+
+        // Smooth scroll to results
+        var results = document.getElementById("results");
+        if (results) {
+            results.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }
 });
 

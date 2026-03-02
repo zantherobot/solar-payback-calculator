@@ -25,6 +25,7 @@ def index():
         "zip_code": "",
         "battery": "none",
         "custom_battery_kwh": "",
+        "financing_type": "loan",
         # Advanced
         "cost_per_watt": "2.75",
         "loan_term": "20",
@@ -44,6 +45,7 @@ def index():
             zip_code = form["zip_code"].strip()
             battery_key = form["battery"]
             custom_kwh = float(form["custom_battery_kwh"] or 0)
+            financing_type = form["financing_type"]
 
             # Advanced
             cost_per_watt = float(form["cost_per_watt"])
@@ -61,6 +63,8 @@ def index():
                 raise ValueError("Please enter a valid 5-digit zip code.")
             if battery_key == "custom" and custom_kwh < 0:
                 raise ValueError("Custom battery size must be 0 or greater.")
+            if financing_type not in ("loan", "cash"):
+                raise ValueError("Financing type must be 'loan' or 'cash'.")
 
             results = calculate(
                 system_kw=system_kw,
@@ -68,6 +72,7 @@ def index():
                 zip_code=zip_code,
                 battery_key=battery_key,
                 custom_battery_kwh=custom_kwh,
+                financing_type=financing_type,
                 cost_per_watt=cost_per_watt,
                 loan_term_years=loan_term,
                 loan_apr=loan_apr,

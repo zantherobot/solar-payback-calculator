@@ -77,11 +77,15 @@ A public-facing web app that helps California homeowners estimate the financial 
 | Assumption | Default Value |
 |---|---|
 | System cost | $2.75/watt (before incentives) |
+| Financing | Loan (user can switch to Cash Purchase) |
 | Solar loan term | 20 years |
 | Solar loan APR | 5.5% |
 | Annual electricity rate escalation | 4% |
 | Annual solar panel degradation | 0.5%/year |
 | Battery cost | Included in common battery presets (~$10,000–$15,000) |
+
+#### Cash Purchase Model
+When the user selects cash purchase, the full system cost is applied at year 0 on the 20-year chart. No monthly loan payment is included. Payback is the year cumulative utility bills (without solar) first exceed the cumulative solar cost (upfront + residual grid bills). Cash payback is typically shorter than loan payback for the same system.
 
 ### 20-Year Comparison Logic
 
@@ -125,13 +129,13 @@ A public-facing web app that helps California homeowners estimate the financial 
 - CA-specific NEM 3.0 simplified model
 - SCE and PG&E rate territories (lookup by zip)
 - Loan financing model
+- Cash purchase financing model
 - Common battery options with TOU load shifting estimate
 
 ### Out of Scope (Future Iterations)
 - Other states / utility territories
 - Hourly simulation (8,760-hour model)
 - SDG&E territory
-- Cash purchase option
 - Federal/state/local incentives
 - Roof orientation / shading inputs
 - API integration with live PVWatts or utility rate databases
@@ -181,9 +185,45 @@ A collapsible "Advanced Settings" panel below the main inputs, collapsed by defa
 
 ---
 
+## Development Standards
+
+These practices apply to every change made to the codebase.
+
+### Testing
+- Every change must include or update a test suite covering the modified behavior.
+- All existing and new tests must pass before any change is committed or deployed.
+- Calculation logic (solar production, NEM 3.0 credits, financial math) must have unit tests with known-good expected outputs.
+- Edge cases — zero bill, maximum system size, boundary zip codes, missing inputs — must be tested.
+
+### Linting & Code Style
+- Python code must pass `flake8` (or `ruff`) with no errors before committing.
+- Follow PEP 8 conventions. Line length limit: 100 characters.
+- JS/CSS changes should be consistent with existing formatting in the file.
+
+### Spec Stays Current
+- If a change modifies user-facing behavior, inputs, outputs, or calculation logic, this SPEC.md must be updated in the same commit.
+- Do not let the spec drift from the actual implementation.
+
+### Input Validation
+- All user inputs must be validated server-side, regardless of any client-side checks.
+- Invalid inputs return clear, user-friendly error messages — never raw stack traces.
+
+### No Secrets in Code
+- API keys, credentials, and environment-specific config go in environment variables, never hardcoded in source files.
+
+### Small, Focused Commits
+- Each commit should do one thing. Avoid mixing unrelated changes.
+- Commit messages should describe *why*, not just *what*.
+
+### Graceful Error Handling
+- Calculation failures (e.g. unknown zip code, out-of-range inputs) must display a helpful message to the user and log the error server-side.
+- The app should never show a 500 error page to end users.
+
+---
+
 ## Resolved Decisions
 
-1. **Loan only** for v1 (no cash purchase scenario)
+1. **Loan and Cash Purchase** both supported — user selects via radio button
 2. **Advanced Settings** included — collapsible panel for adjusting financial assumptions
 3. **Federal ITC removed** — no longer applicable in 2026
 4. **Branding**: Contemporary green energy professional

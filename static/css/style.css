@@ -318,6 +318,66 @@ footer p {
 }
 
 /* ==========================================================================
+   Financing radio group
+   ========================================================================== */
+
+.form-group--full {
+    grid-column: 1 / -1;
+}
+
+.radio-group {
+    display: flex;
+    gap: 24px;
+    margin-top: 4px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.radio-label input[type="radio"] {
+    accent-color: var(--primary);
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Calculation complete banner
+   ========================================================================== */
+
+.calc-complete-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    opacity: 1;
+    transition: opacity 0.8s ease;
+}
+
+.calc-complete-banner::before {
+    content: "✓";
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.calc-complete-banner--fade {
+    opacity: 0;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 
