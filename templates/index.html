@@ -170,6 +170,10 @@
                 <p class="stat-value">${{ "{:,.0f}".format(results.total_cost) }}</p>
             </div>
             <div class="card stat-card">
+                <p class="stat-label">Monthly Electricity Bill</p>
+                <p class="stat-value">${{ "{:,.0f}".format(form.monthly_bill | float) }}</p>
+            </div>
+            <div class="card stat-card">
                 {% if results.financing_type == 'loan' %}
                 <p class="stat-label">Monthly Loan Payment</p>
                 <p class="stat-value">${{ "{:,.0f}".format(results.monthly_payment) }}</p>
@@ -203,16 +207,11 @@
 
         <!-- Carbon emissions card -->
         <div class="card carbon-card">
-            <h2>
-                Carbon Emissions
-                <a href="https://www.energy.ca.gov/programs-and-topics/programs/power-source-disclosure-program/power-content-label/annual-power-5"
-                   target="_blank" rel="noopener noreferrer"
-                   class="info-icon"
-                   title="Source: CEC Annual Power Content Label. Carbon intensity varies by rate plan — this estimate uses the default residential plan for {{ results.utility }}.">&#9432;</a>
-            </h2>
+            <h2>Carbon Emissions</h2>
             <p class="carbon-source-note">
                 Based on {{ results.utility }} grid: {{ (results.zero_carbon_pct * 100) | int }}% zero-carbon
-                ({{ results.plan_name }} default plan &middot; CEC 2024 Power Content Label).
+                ({{ results.plan_name }} default plan &middot; <a href="https://www.energy.ca.gov/programs-and-topics/programs/power-source-disclosure-program/power-content-label/annual-power-5"
+                   target="_blank" rel="noopener noreferrer">CEC 2024 Power Content Label</a>).
                 Intensity varies by rate plan.
             </p>
             <div class="carbon-grid">
