@@ -156,6 +156,11 @@ def calculate(
     export_credits_yr1 = exported_yr1 * NEM3_EXPORT_RATE
     monthly_utility_bill_with_solar = base_charge + max(0.0, gross_energy_charge - export_credits_yr1) / 12
 
+    # Year 1 net cash-flow savings: what the homeowner stops paying to the utility,
+    # minus what they now pay toward the loan. Uses the same baseline (no escalation,
+    # no degradation) as the other Year 1 stat cards for consistency.
+    year1_savings = (monthly_bill - monthly_utility_bill_with_solar - monthly_payment) * 12
+
     # ------------------------------------------------------------------
     # 8. 20-year projection
     # ------------------------------------------------------------------
@@ -177,7 +182,6 @@ def calculate(
     cum_u = 0.0   # cumulative utility payments (with solar)
     cum_sc = initial_solar_cost  # cumulative solar company payments
     payback_years = None
-    year1_savings = 0.0
 
     for yr in range(1, 21):
         # --- No-solar annual cost ---
@@ -225,9 +229,6 @@ def calculate(
         cum_sc += loan_annual
         cumulative_utility_with_solar.append(round(cum_u, 2))
         cumulative_solar_company.append(round(cum_sc, 2))
-
-        if yr == 1:
-            year1_savings = no_solar_annual - solar_annual
 
         # --- Payback detection (linear interpolation) ---
         if payback_years is None and cum_ns > cum_s:

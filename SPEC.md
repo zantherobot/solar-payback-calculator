@@ -233,6 +233,16 @@ The `max(0, ...)` ensures export credits cannot make the energy charge negative 
 - If solar over-generates relative to consumption, the bill floors at `base_charge`
 - Stored as `monthly_utility_bill_with_solar` on `SolarResults`
 
+### Consistency with Year 1 Savings
+
+`year1_savings` is derived from the same baseline figures for consistency across all Year 1 stat cards:
+
+```
+year1_savings = (monthly_bill − monthly_utility_bill_with_solar − monthly_payment) × 12
+```
+
+This is the homeowner's net annual cash-flow improvement in Year 1: the reduction in utility payments minus the new loan obligation. For cash purchases, `monthly_payment = 0`.
+
 ---
 
 ## Resolved Decisions
