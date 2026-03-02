@@ -40,6 +40,7 @@ These apply to every change.
 - All existing and new tests must pass before committing or deploying.
 - Calculation logic (solar production, NEM 3.0 credits, financial math) must have unit tests with known-good expected outputs.
 - Edge cases — zero bill, maximum system size, boundary zip codes, missing inputs — must be tested.
+- When clarifying or documenting a use case (e.g. when updating SPEC.md to explain how a formula works), also add or update tests in `tests/test_calculator.py` to lock in that behaviour. Spec, tests, and code must all be in agreement.
 
 ### Linting & Code Style
 - Python code must pass `flake8` (or `ruff`) with no errors before committing.

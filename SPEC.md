@@ -90,14 +90,20 @@ When the user selects cash purchase, the full system cost is applied at year 0 o
 ### 20-Year Comparison Logic
 
 **No Solar path:**
-- `year_N_cost = monthly_bill × 12 × (1 + escalation_rate)^N`
+- `year_N_cost = monthly_bill × 12 × (1 + escalation_rate)^(N−1)`
+- Year 1 uses current (baseline) rates — no escalation yet. Escalation first compounds in year 2.
 - Cumulate over 20 years
 
 **With Solar path:**
 - Monthly loan payment (fixed, based on total system cost)
 - Plus residual grid cost (energy not offset by solar/battery, at TOU rates)
-- Grid costs escalate annually; loan payment stays fixed
+- Grid costs escalate annually from year 2; loan payment stays fixed
+- Solar production degrades from year 2 (year 1 is at full rated output)
 - Cumulate over 20 years
+
+**Why (N−1)?** Year 1 represents the first full year of ownership at today's rates and full panel output, consistent with the "Year 1 baseline" stat cards. Escalation and degradation compound starting in year 2. This is the standard convention for consumer-facing solar calculators (e.g., EnergySage, SunPower).
+
+**Note on year 1 stat card vs. chart consistency:** The chart's year 1 difference (`no_solar[1] − solar[1]`) will be close to but not identical to `year1_savings` on the stat card. Both use year 1 baseline values, but the chart's solar side values self-consumed energy at the off-peak TOU rate (midday solar displaces off-peak consumption per NEM 3.0), while the stat card uses the average blended rate for the residual grid charge. This methodological difference is intentional: the stat card uses a simpler, bill-offset model consistent with how homeowners read their utility bill; the chart uses a TOU-aware model that more accurately reflects time-of-use savings over 20 years.
 
 **Payback period** = the year where cumulative solar savings exceed cumulative solar costs (i.e., the crossover point).
 

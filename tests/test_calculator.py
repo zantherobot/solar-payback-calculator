@@ -160,13 +160,22 @@ def test_no_solar_strictly_increases():
 
 
 def test_no_solar_escalates_at_correct_rate():
-    """Year 1 no-solar cost should be bill × 12 × (1 + escalation)^1."""
+    """
+    Year 1 uses current (baseline) rates — no escalation yet.
+    Year 2 is the first year where escalation compounds: bill × 12 × (1 + esc)^1.
+    Convention: (yr − 1) exponent so year 1 is consistent with Year 1 stat cards.
+    """
     monthly_bill = 200.0
     escalation = 4.0
     r = calculate(8.0, monthly_bill, PGE_ZIP, "none", rate_escalation=escalation)
-    expected_year1 = monthly_bill * 12 * (1 + escalation / 100) ** 1
+    # Year 1: no escalation (exponent = 0)
+    expected_year1 = monthly_bill * 12
     actual_year1 = r.cumulative_no_solar[1] - r.cumulative_no_solar[0]
     assert abs(actual_year1 - expected_year1) < 0.01
+    # Year 2: first escalation step (exponent = 1)
+    expected_year2 = monthly_bill * 12 * (1 + escalation / 100) ** 1
+    actual_year2 = r.cumulative_no_solar[2] - r.cumulative_no_solar[1]
+    assert abs(actual_year2 - expected_year2) < 0.01
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +253,23 @@ def test_panel_degradation_reduces_production_over_time():
     r_high = calculate(8.0, 250, PGE_ZIP, "none", panel_degradation=2.0)
     # Higher degradation → less savings → higher cumulative solar cost at year 20
     assert r_high.cumulative_solar[20] >= r_low.cumulative_solar[20]
+
+
+def test_year1_uses_baseline_no_escalation_no_degradation():
+    """
+    Year 1 on the chart must be identical regardless of escalation or degradation
+    settings, because both factors first compound in year 2 (exponent = yr − 1,
+    so yr=1 → exponent 0 → factor 1). This makes chart year 1 consistent with
+    the Year 1 stat card baseline.
+    """
+    r_base = calculate(8.0, 250, PGE_ZIP, "none", rate_escalation=0.0, panel_degradation=0.0)
+    r_high = calculate(8.0, 250, PGE_ZIP, "none", rate_escalation=10.0, panel_degradation=2.0)
+    # Year 1 no-solar spend must be identical (both = monthly_bill × 12)
+    assert r_base.cumulative_no_solar[1] == r_high.cumulative_no_solar[1]
+    # Year 1 solar cumulative spend (loan + residual grid) must also be identical
+    assert r_base.cumulative_solar[1] == r_high.cumulative_solar[1]
+    # But year 2 must diverge when escalation/degradation are non-zero
+    assert r_high.cumulative_no_solar[2] > r_base.cumulative_no_solar[2]
 
 
 # ---------------------------------------------------------------------------

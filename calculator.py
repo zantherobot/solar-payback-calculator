@@ -187,16 +187,19 @@ def calculate(
 
     for yr in range(1, 21):
         # --- No-solar annual cost ---
-        no_solar_annual = monthly_bill * 12 * (1 + esc) ** yr
+        # Year 1 uses current (baseline) rates; escalation compounds from year 2.
+        # (yr - 1) exponent: yr=1 → factor 1 (no escalation), yr=2 → (1+esc)^1, etc.
+        no_solar_annual = monthly_bill * 12 * (1 + esc) ** (yr - 1)
         cum_ns += no_solar_annual
 
         # --- Solar production this year (degradation) ---
-        yr_production = annual_production * (1 - deg) ** yr
+        # Same convention: year 1 at full rated output; degradation compounds from year 2.
+        yr_production = annual_production * (1 - deg) ** (yr - 1)
         self_consumed = yr_production * self_consumption_ratio
         exported = yr_production - self_consumed
 
         # --- Value of self-consumed kWh ---
-        esc_factor = (1 + esc) ** yr
+        esc_factor = (1 + esc) ** (yr - 1)
         if battery_kwh > 0:
             # Direct self-consumption (midday, off-peak rate)
             direct_frac = BASE_SELF_CONSUMPTION / self_consumption_ratio
