@@ -7,7 +7,7 @@ Covers: solar production, self-consumption, loan math, cash purchase,
 
 import pytest
 from calculator import calculate
-from data import BASE_SELF_CONSUMPTION, CUSTOM_BATTERY_COST_PER_KWH, SYSTEM_LOSSES
+from data import BASE_SELF_CONSUMPTION, CUSTOM_BATTERY_COST_PER_KWH, NEM3_EXPORT_RATE, SYSTEM_LOSSES, TOU_RATES
 
 # Representative zip codes
 PGE_ZIP = "94025"   # Menlo Park — PG&E territory, prefix 940 → 5.1 peak sun hours
@@ -244,3 +244,113 @@ def test_panel_degradation_reduces_production_over_time():
     r_high = calculate(8.0, 250, PGE_ZIP, "none", panel_degradation=2.0)
     # Higher degradation → less savings → higher cumulative solar cost at year 20
     assert r_high.cumulative_solar[20] >= r_low.cumulative_solar[20]
+
+
+# ---------------------------------------------------------------------------
+# Monthly utility bill with solar (Year 1 baseline)
+# ---------------------------------------------------------------------------
+
+def test_monthly_utility_bill_includes_base_charge():
+    """Bill with solar must be at least the utility's fixed base charge."""
+    r_pge = calculate(8.0, 250, PGE_ZIP, "none")
+    r_sce = calculate(8.0, 250, SCE_ZIP, "none")
+    assert r_pge.monthly_utility_bill_with_solar >= TOU_RATES["PGE"]["base_charge_monthly"]
+    assert r_sce.monthly_utility_bill_with_solar >= TOU_RATES["SCE"]["base_charge_monthly"]
+
+
+def test_monthly_utility_bill_floors_at_base_charge_for_oversized_system():
+    """A massive system exports everything; bill should floor at the base charge only."""
+    r = calculate(50.0, 250, PGE_ZIP, "none")
+    assert r.monthly_utility_bill_with_solar == TOU_RATES["PGE"]["base_charge_monthly"]
+
+
+def test_monthly_utility_bill_decreases_with_larger_system():
+    """More solar production → lower residual grid draw → lower bill."""
+    r_small = calculate(4.0, 250, PGE_ZIP, "none")
+    r_large = calculate(12.0, 250, PGE_ZIP, "none")
+    assert r_large.monthly_utility_bill_with_solar <= r_small.monthly_utility_bill_with_solar
+
+
+def test_monthly_utility_bill_uses_year1_baseline_not_escalated():
+    """
+    Bill should be the same regardless of rate_escalation setting, because it
+    uses Year 1 baseline values (no escalation applied).
+    """
+    r_low_esc = calculate(8.0, 250, PGE_ZIP, "none", rate_escalation=0.0)
+    r_high_esc = calculate(8.0, 250, PGE_ZIP, "none", rate_escalation=10.0)
+    assert r_low_esc.monthly_utility_bill_with_solar == r_high_esc.monthly_utility_bill_with_solar
+
+
+def test_monthly_utility_bill_manual_spot_check():
+    """
+    Manually verify the formula for a known PG&E case (no battery):
+      avg_rate = TOU_RATES["PGE"]["weighted_avg"]
+      annual_consumption = monthly_bill * 12 / avg_rate
+      self_consumed = annual_production * BASE_SELF_CONSUMPTION
+      exported = annual_production - self_consumed
+      residual_grid_kwh = max(0, annual_consumption - self_consumed)
+      gross_energy_charge = residual_grid_kwh * avg_rate
+      export_credits = exported * NEM3_EXPORT_RATE
+      expected = base_charge + max(0, gross_energy_charge - export_credits) / 12
+    """
+    system_kw, monthly_bill = 8.0, 250.0
+    tou = TOU_RATES["PGE"]
+    avg_rate = tou["weighted_avg"]
+    peak_sun_hours = 5.1  # zip 940xx
+    annual_production = system_kw * peak_sun_hours * 365 * (1 - SYSTEM_LOSSES)
+    annual_consumption = monthly_bill * 12 / avg_rate
+    self_consumed = annual_production * BASE_SELF_CONSUMPTION
+    exported = annual_production - self_consumed
+    residual_grid_kwh = max(0.0, annual_consumption - self_consumed)
+    gross_energy_charge = residual_grid_kwh * avg_rate
+    export_credits = exported * NEM3_EXPORT_RATE
+    expected = tou["base_charge_monthly"] + max(0.0, gross_energy_charge - export_credits) / 12
+
+    r = calculate(system_kw, monthly_bill, PGE_ZIP, "none")
+    assert abs(r.monthly_utility_bill_with_solar - expected) < 0.01
+
+
+# ---------------------------------------------------------------------------
+# Year 1 savings — consistent with stat card values
+# ---------------------------------------------------------------------------
+
+def test_year1_savings_consistent_with_stat_cards():
+    """
+    Year 1 savings must equal (monthly_bill - monthly_utility_bill_with_solar
+    - monthly_payment) * 12, matching the three stat cards shown to the user.
+    """
+    monthly_bill = 250.0
+    r = calculate(8.0, monthly_bill, PGE_ZIP, "none", financing_type="loan")
+    expected = (monthly_bill - r.monthly_utility_bill_with_solar - r.monthly_payment) * 12
+    assert abs(r.year1_savings - expected) < 0.01
+
+
+def test_year1_savings_cash_purchase():
+    """For cash purchase, monthly_payment=0 so savings = (bill - utility_bill) * 12."""
+    monthly_bill = 250.0
+    r = calculate(8.0, monthly_bill, PGE_ZIP, "none", financing_type="cash")
+    assert r.monthly_payment == 0.0
+    expected = (monthly_bill - r.monthly_utility_bill_with_solar) * 12
+    assert abs(r.year1_savings - expected) < 0.01
+
+
+def test_year1_savings_specific_values():
+    """
+    Regression test for the reported discrepancy:
+    8 kW system, $250/month bill, PG&E, loan.
+    Stat cards showed ~$61 utility bill and ~$151 loan.
+    year1_savings must equal (250 - utility_bill - loan) * 12, not a loop-derived value.
+    """
+    r = calculate(8.0, 250.0, PGE_ZIP, "none", financing_type="loan")
+    from_stat_cards = (250.0 - r.monthly_utility_bill_with_solar - r.monthly_payment) * 12
+    assert abs(r.year1_savings - from_stat_cards) < 0.01
+
+
+def test_year1_savings_independent_of_escalation():
+    """
+    year1_savings uses baseline Year 1 values, so changing rate_escalation
+    should NOT change year1_savings (escalation only affects the 20-yr loop).
+    """
+    r_no_esc = calculate(8.0, 250.0, PGE_ZIP, "none", rate_escalation=0.0)
+    r_high_esc = calculate(8.0, 250.0, PGE_ZIP, "none", rate_escalation=10.0)
+    assert abs(r_no_esc.year1_savings - r_high_esc.year1_savings) < 0.01

@@ -157,9 +157,11 @@ def calculate(
     monthly_utility_bill_with_solar = base_charge + max(0.0, gross_energy_charge - export_credits_yr1) / 12
 
     # Year 1 net cash-flow savings: what the homeowner stops paying to the utility,
-    # minus what they now pay toward the loan. Uses the same baseline (no escalation,
-    # no degradation) as the other Year 1 stat cards for consistency.
-    year1_savings = (monthly_bill - monthly_utility_bill_with_solar - monthly_payment) * 12
+    # minus what they now pay toward the loan. Computed from the rounded display
+    # values so the arithmetic is exactly consistent with the three stat cards.
+    monthly_utility_bill_with_solar_r = round(monthly_utility_bill_with_solar, 2)
+    monthly_payment_r = round(monthly_payment, 2)
+    year1_savings = (monthly_bill - monthly_utility_bill_with_solar_r - monthly_payment_r) * 12
 
     # ------------------------------------------------------------------
     # 8. 20-year projection
@@ -282,8 +284,8 @@ def calculate(
         system_cost=round(system_cost, 2),
         battery_cost=round(battery_cost, 2),
         total_cost=round(total_cost, 2),
-        monthly_payment=round(monthly_payment, 2),
-        monthly_utility_bill_with_solar=round(monthly_utility_bill_with_solar, 2),
+        monthly_payment=monthly_payment_r,
+        monthly_utility_bill_with_solar=monthly_utility_bill_with_solar_r,
         year1_savings=round(year1_savings, 2),
         self_consumption_ratio=round(self_consumption_ratio * 100, 1),
         payback_years=round(payback_years, 2) if payback_years else None,
