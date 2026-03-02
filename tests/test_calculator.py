@@ -309,28 +309,25 @@ def test_monthly_utility_bill_uses_year1_baseline_not_escalated():
 
 def test_monthly_utility_bill_manual_spot_check():
     """
-    Manually verify the formula for a known PG&E case (no battery):
-      avg_rate = TOU_RATES["PGE"]["weighted_avg"]
-      annual_consumption = monthly_bill * 12 / avg_rate
-      self_consumed = annual_production * BASE_SELF_CONSUMPTION
-      exported = annual_production - self_consumed
-      residual_grid_kwh = max(0, annual_consumption - self_consumed)
-      gross_energy_charge = residual_grid_kwh * avg_rate
-      export_credits = exported * NEM3_EXPORT_RATE
-      expected = base_charge + max(0, gross_energy_charge - export_credits) / 12
+    Manually verify the TOU-aware formula for a known PG&E case (no battery):
+      self_consumed_value = self_consumed * offpeak   (midday solar → off-peak rate)
+      export_credits      = exported * NEM3_EXPORT_RATE
+      annual_energy_charge = (monthly_bill - base_charge) * 12  (energy-only portion)
+      residual_energy      = max(0, annual_energy_charge - self_consumed_value - export_credits)
+      expected             = base_charge + residual_energy / 12
+    Solar offsets only the energy portion; base charge is always owed.
     """
     system_kw, monthly_bill = 8.0, 250.0
     tou = TOU_RATES["PGE"]
-    avg_rate = tou["weighted_avg"]
     peak_sun_hours = 5.1  # zip 940xx
     annual_production = system_kw * peak_sun_hours * 365 * (1 - SYSTEM_LOSSES)
-    annual_consumption = monthly_bill * 12 / avg_rate
     self_consumed = annual_production * BASE_SELF_CONSUMPTION
     exported = annual_production - self_consumed
-    residual_grid_kwh = max(0.0, annual_consumption - self_consumed)
-    gross_energy_charge = residual_grid_kwh * avg_rate
+    self_consumed_value = self_consumed * tou["offpeak"]
     export_credits = exported * NEM3_EXPORT_RATE
-    expected = tou["base_charge_monthly"] + max(0.0, gross_energy_charge - export_credits) / 12
+    annual_energy_charge = (monthly_bill - tou["base_charge_monthly"]) * 12
+    residual_energy = max(0.0, annual_energy_charge - self_consumed_value - export_credits)
+    expected = tou["base_charge_monthly"] + residual_energy / 12
 
     r = calculate(system_kw, monthly_bill, PGE_ZIP, "none")
     assert abs(r.monthly_utility_bill_with_solar - expected) < 0.01
@@ -370,6 +367,45 @@ def test_year1_savings_specific_values():
     r = calculate(8.0, 250.0, PGE_ZIP, "none", financing_type="loan")
     from_stat_cards = (250.0 - r.monthly_utility_bill_with_solar - r.monthly_payment) * 12
     assert abs(r.year1_savings - from_stat_cards) < 0.01
+
+
+def test_loop_base_charge_always_present_for_oversized_system():
+    """
+    Bug regression: a 16 kW system (oversized for a $250/month bill) used to
+    produce residual_grid = $0 each year, making the solar line flat on the
+    chart. The base charge ($24/month PG&E) is always owed regardless of how
+    much solar is produced, so the with-solar line must still rise each year.
+    """
+    r_loan = calculate(16.0, 250, PGE_ZIP, "none", financing_type="loan")
+    r_cash = calculate(16.0, 250, PGE_ZIP, "none", financing_type="cash")
+    base_charge_annual = TOU_RATES["PGE"]["base_charge_monthly"] * 12
+    # Year 1 utility payment (residual_grid) must include at least the base charge
+    utility_yr1 = r_cash.cumulative_utility_with_solar[1]
+    assert utility_yr1 >= base_charge_annual - 0.01  # tolerance for rounding
+    # The with-solar line must increase each year (not flat)
+    for i in range(1, len(r_cash.cumulative_solar)):
+        assert r_cash.cumulative_solar[i] > r_cash.cumulative_solar[i - 1], \
+            f"cumulative_solar[{i}] should be > cumulative_solar[{i-1}] (base charge missing?)"
+    # Same check for loan (loan payments + base charge both accumulate)
+    for i in range(1, len(r_loan.cumulative_solar)):
+        assert r_loan.cumulative_solar[i] > r_loan.cumulative_solar[i - 1]
+
+
+def test_year1_chart_difference_matches_year1_savings():
+    """
+    For a LOAN purchase, the chart's year-1 difference
+    (cumulative_no_solar[1] - cumulative_solar[1]) must equal year1_savings
+    within rounding tolerance ($0.13 = 2 × $0.005 × 12 months + 1 cent).
+
+    Cash purchase is excluded: cumulative_solar[0] starts at the full system
+    cost, so the chart's year-1 difference includes the upfront investment and
+    is not comparable to the cash-flow year1_savings stat card.
+    """
+    r = calculate(8.0, 250.0, PGE_ZIP, "none", financing_type="loan")
+    chart_diff = r.cumulative_no_solar[1] - r.cumulative_solar[1]
+    assert abs(chart_diff - r.year1_savings) < 0.13, (
+        f"chart year-1 diff={chart_diff:.2f} vs stat card year1_savings={r.year1_savings:.2f}"
+    )
 
 
 def test_year1_savings_independent_of_escalation():

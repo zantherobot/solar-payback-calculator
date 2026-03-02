@@ -146,15 +146,30 @@ def calculate(
     # ------------------------------------------------------------------
     # 7. Projected Year 1 monthly utility bill with solar
     # ------------------------------------------------------------------
-    # Uses baseline values (no rate escalation, no panel degradation) to
-    # represent the bill in the first year after solar is installed.
+    # Uses baseline values (no rate escalation, no panel degradation).
+    # Self-consumed kWh are valued at the TOU off-peak rate (midday solar
+    # displaces off-peak purchases). Same methodology as the 20-year loop,
+    # so the stat card and chart are consistent at year 1.
+    # Solar can only offset the energy portion of the bill; the base charge
+    # (grid participation / customer charge) is always owed.
     base_charge = tou["base_charge_monthly"]
+    offpeak = tou["offpeak"]
+    peak = tou["peak"]
     self_consumed_yr1 = annual_production * self_consumption_ratio
     exported_yr1 = annual_production - self_consumed_yr1
-    residual_grid_kwh = max(0.0, annual_consumption - self_consumed_yr1)
-    gross_energy_charge = residual_grid_kwh * avg_rate
     export_credits_yr1 = exported_yr1 * NEM3_EXPORT_RATE
-    monthly_utility_bill_with_solar = base_charge + max(0.0, gross_energy_charge - export_credits_yr1) / 12
+    if battery_kwh > 0:
+        direct_frac = BASE_SELF_CONSUMPTION / self_consumption_ratio
+        battery_frac = 1 - direct_frac
+        self_consumed_value_yr1 = (
+            self_consumed_yr1 * direct_frac * offpeak
+            + self_consumed_yr1 * battery_frac * peak
+        )
+    else:
+        self_consumed_value_yr1 = self_consumed_yr1 * offpeak
+    annual_energy_charge_yr1 = (monthly_bill - base_charge) * 12
+    residual_energy_yr1 = max(0.0, annual_energy_charge_yr1 - self_consumed_value_yr1 - export_credits_yr1)
+    monthly_utility_bill_with_solar = base_charge + residual_energy_yr1 / 12
 
     # Year 1 net cash-flow savings: what the homeowner stops paying to the utility,
     # minus what they now pay toward the loan. Computed from the rounded display
@@ -168,8 +183,7 @@ def calculate(
     # ------------------------------------------------------------------
     esc = rate_escalation / 100
     deg = panel_degradation / 100
-    offpeak = tou["offpeak"]
-    peak = tou["peak"]
+    # offpeak and peak already set in section 7 above
 
     years = list(range(0, 21))
     cumulative_no_solar = [0.0]
@@ -215,11 +229,15 @@ def calculate(
         # --- Export credits (NEM 3.0 ACC — roughly flat) ---
         export_credits = exported * NEM3_EXPORT_RATE
 
-        # --- Total savings vs. no-solar bill ---
-        total_savings = self_consumed_value + export_credits
-
         # --- Residual grid cost ---
-        residual_grid = max(0, no_solar_annual - total_savings)
+        # Solar can only offset the energy portion of the bill; the base charge
+        # (fixed grid participation / customer charge) is always owed regardless
+        # of how much the system produces. Without this floor, an oversized system
+        # drives residual_grid to $0, hiding the monthly base charge on the chart.
+        base_charge_annual = base_charge * 12
+        annual_energy = no_solar_annual - base_charge_annual
+        residual_energy = max(0, annual_energy - self_consumed_value - export_credits)
+        residual_grid = base_charge_annual + residual_energy
 
         # --- Loan payment (only during loan term; zero for cash purchase) ---
         loan_annual = monthly_payment * 12 if (financing_type == "loan" and yr <= loan_term_years) else 0
