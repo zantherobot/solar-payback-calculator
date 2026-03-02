@@ -11,6 +11,7 @@ from data import (
     BATTERY_ROUND_TRIP_EFF,
     BASE_SELF_CONSUMPTION,
     CUSTOM_BATTERY_COST_PER_KWH,
+    FOSSIL_EMISSION_FACTOR_LBS_KWH,
     MAX_SELF_CONSUMPTION,
     NEM3_EXPORT_RATE,
     SYSTEM_LOSSES,
@@ -52,6 +53,15 @@ class SolarResults:
     years: list[int]
     cumulative_no_solar: list[float]
     cumulative_solar: list[float]
+    # Cost breakdown: what goes to utility vs. solar company (index 0–20)
+    cumulative_utility_with_solar: list[float]
+    cumulative_solar_company: list[float]
+
+    # Carbon (Year 1 baseline, lbs CO2)
+    grid_emission_rate: float       # lbs CO2 per kWh consumed from the grid
+    zero_carbon_pct: float          # fraction of grid that is zero-carbon (0–1)
+    annual_co2_no_solar_lbs: float  # without solar
+    annual_co2_with_solar_lbs: float  # with solar (net grid draw × emission rate)
 
 
 def calculate(
@@ -76,6 +86,8 @@ def calculate(
         raise ValueError(f"Zip code {zip_code} is not in a supported CA utility territory.")
     peak_sun_hours = get_peak_sun_hours(zip_code)
     tou = TOU_RATES[utility]
+    zero_carbon_pct = tou["zero_carbon_pct"]
+    grid_emission_rate = (1 - zero_carbon_pct) * FOSSIL_EMISSION_FACTOR_LBS_KWH
 
     # ------------------------------------------------------------------
     # 2. Battery info
@@ -143,8 +155,13 @@ def calculate(
     # Cash purchase: upfront payment at year 0; loan: payments spread over time
     initial_solar_cost = round(total_cost, 2) if financing_type == "cash" else 0.0
     cumulative_solar = [initial_solar_cost]
+    # Cost breakdown: utility payments vs. solar-company payments
+    cumulative_utility_with_solar = [0.0]
+    cumulative_solar_company = [initial_solar_cost]
     cum_ns = 0.0
     cum_s = initial_solar_cost
+    cum_u = 0.0   # cumulative utility payments (with solar)
+    cum_sc = initial_solar_cost  # cumulative solar company payments
     payback_years = None
     year1_savings = 0.0
 
@@ -190,6 +207,10 @@ def calculate(
 
         cumulative_no_solar.append(round(cum_ns, 2))
         cumulative_solar.append(round(cum_s, 2))
+        cum_u += residual_grid
+        cum_sc += loan_annual
+        cumulative_utility_with_solar.append(round(cum_u, 2))
+        cumulative_solar_company.append(round(cum_sc, 2))
 
         if yr == 1:
             year1_savings = no_solar_annual - solar_annual
@@ -227,6 +248,13 @@ def calculate(
     # ------------------------------------------------------------------
     offset_pct = min(100, (annual_production / annual_consumption * 100)) if annual_consumption > 0 else 0
 
+    # ------------------------------------------------------------------
+    # 10. Carbon (Year 1 baseline)
+    # ------------------------------------------------------------------
+    annual_co2_no_solar_lbs = annual_consumption * grid_emission_rate
+    net_grid_kwh = max(0.0, annual_consumption - annual_production)
+    annual_co2_with_solar_lbs = net_grid_kwh * grid_emission_rate
+
     return SolarResults(
         utility=utility,
         plan_name=tou["plan_name"],
@@ -247,4 +275,10 @@ def calculate(
         years=years,
         cumulative_no_solar=cumulative_no_solar,
         cumulative_solar=cumulative_solar,
+        cumulative_utility_with_solar=cumulative_utility_with_solar,
+        cumulative_solar_company=cumulative_solar_company,
+        grid_emission_rate=round(grid_emission_rate, 4),
+        zero_carbon_pct=zero_carbon_pct,
+        annual_co2_no_solar_lbs=round(annual_co2_no_solar_lbs, 1),
+        annual_co2_with_solar_lbs=round(annual_co2_with_solar_lbs, 1),
     )

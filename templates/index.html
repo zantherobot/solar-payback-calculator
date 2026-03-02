@@ -191,6 +191,58 @@
                 <canvas id="payback-chart"></canvas>
             </div>
         </div>
+
+        <!-- Cost breakdown chart -->
+        <div class="card chart-card">
+            <h2>Where Your Money Goes</h2>
+            <p class="chart-subtitle">Cumulative payments split between electric utility and solar company</p>
+            <div class="chart-container chart-container--breakdown">
+                <canvas id="breakdown-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Carbon emissions card -->
+        <div class="card carbon-card">
+            <h2>
+                Carbon Emissions
+                <a href="https://www.energy.ca.gov/programs-and-topics/programs/power-source-disclosure-program/power-content-label/annual-power-5"
+                   target="_blank" rel="noopener noreferrer"
+                   class="info-icon"
+                   title="Source: CEC Annual Power Content Label. Carbon intensity varies by rate plan — this estimate uses the default residential plan for {{ results.utility }}.">&#9432;</a>
+            </h2>
+            <p class="carbon-source-note">
+                Based on {{ results.utility }} grid: {{ (results.zero_carbon_pct * 100) | int }}% zero-carbon
+                ({{ results.plan_name }} default plan &middot; CEC 2024 Power Content Label).
+                Intensity varies by rate plan.
+            </p>
+            <div class="carbon-grid">
+                <div class="carbon-scenario">
+                    <p class="carbon-label">Without Solar</p>
+                    <p class="carbon-value">{{ "{:,.0f}".format(results.annual_co2_no_solar_lbs) }} <span>lbs CO&#x2082;/yr</span></p>
+                    <p class="carbon-tons">≈ {{ "%.1f"|format(results.annual_co2_no_solar_lbs / 2205) }} metric tons</p>
+                </div>
+                <div class="carbon-divider">→</div>
+                <div class="carbon-scenario carbon-scenario--solar">
+                    <p class="carbon-label">With Solar</p>
+                    {% if results.annual_co2_with_solar_lbs == 0 %}
+                    <p class="carbon-value carbon-value--zero">0 <span>lbs CO&#x2082;/yr</span></p>
+                    <p class="carbon-tons">Solar fully offsets your consumption</p>
+                    {% else %}
+                    <p class="carbon-value">{{ "{:,.0f}".format(results.annual_co2_with_solar_lbs) }} <span>lbs CO&#x2082;/yr</span></p>
+                    <p class="carbon-tons">≈ {{ "%.1f"|format(results.annual_co2_with_solar_lbs / 2205) }} metric tons</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% set co2_avoided = results.annual_co2_no_solar_lbs - results.annual_co2_with_solar_lbs %}
+            {% if co2_avoided > 0 %}
+            <div class="carbon-savings">
+                <span class="carbon-savings-badge">
+                    {{ "{:,.0f}".format(co2_avoided) }} lbs CO&#x2082; avoided per year
+                    (≈ {{ "%.1f"|format(co2_avoided / 2205) }} metric tons)
+                </span>
+            </div>
+            {% endif %}
+        </div>
     </section>
     {% endif %}
 
@@ -209,6 +261,12 @@
 {% if chart_data %}
 <script>
     renderPaybackChart({{ chart_data | safe }});
+</script>
+{% endif %}
+
+{% if breakdown_data %}
+<script>
+    renderBreakdownChart({{ breakdown_data | safe }});
 </script>
 {% endif %}
 

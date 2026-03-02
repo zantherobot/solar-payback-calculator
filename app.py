@@ -16,6 +16,7 @@ app = Flask(__name__)
 def index():
     results = None
     chart_data = None
+    breakdown_data = None
     error = None
 
     # Defaults for form fields
@@ -86,6 +87,15 @@ def index():
                 "withSolar": results.cumulative_solar,
             })
 
+            breakdown_data = json.dumps({
+                "noSolar10": results.cumulative_no_solar[10],
+                "noSolar20": results.cumulative_no_solar[20],
+                "utilityWithSolar10": results.cumulative_utility_with_solar[10],
+                "utilityWithSolar20": results.cumulative_utility_with_solar[20],
+                "solarCompany10": results.cumulative_solar_company[10],
+                "solarCompany20": results.cumulative_solar_company[20],
+            })
+
         except ValueError as e:
             error = str(e)
         except Exception:
@@ -100,6 +110,7 @@ def index():
         form=form,
         results=results,
         chart_data=chart_data,
+        breakdown_data=breakdown_data,
         error=error,
         battery_options=battery_options,
     )

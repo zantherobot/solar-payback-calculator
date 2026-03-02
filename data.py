@@ -73,21 +73,32 @@ def get_peak_sun_hours(zip_code: str) -> float | None:
 
 # ---------------------------------------------------------------------------
 # TOU rate schedules (approximate 2025 rates, $/kWh)
+# zero_carbon_pct: share of electricity from zero-carbon sources per the
+# CEC Annual Power Content Label (default residential plan, 2024 report).
 # ---------------------------------------------------------------------------
 TOU_RATES = {
     "PGE": {
         "plan_name": "E-TOU-C",
-        "peak": 0.49,       # 4–9 PM
+        "peak": 0.49,           # 4–9 PM
         "offpeak": 0.30,
         "weighted_avg": 0.36,
+        "zero_carbon_pct": 0.98,  # 98% zero-carbon (CEC 2024 Power Content Label)
     },
     "SCE": {
         "plan_name": "TOU-D-Prime",
-        "peak": 0.54,       # 4–9 PM
+        "peak": 0.54,           # 4–9 PM
         "offpeak": 0.27,
         "weighted_avg": 0.35,
+        "zero_carbon_pct": 0.49,  # 49% zero-carbon (CEC 2024 Power Content Label)
     },
 }
+
+# ---------------------------------------------------------------------------
+# Carbon emission factor for the fossil-fuel portion of CA grid generation.
+# Primarily natural gas combined-cycle; approximately 0.855 lbs CO2/kWh.
+# Multiply by (1 - zero_carbon_pct) to get a utility's effective grid rate.
+# ---------------------------------------------------------------------------
+FOSSIL_EMISSION_FACTOR_LBS_KWH = 0.855
 
 # ---------------------------------------------------------------------------
 # NEM 3.0 export credit (Avoided Cost Calculator approximation)

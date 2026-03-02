@@ -285,6 +285,12 @@ header {
     font-size: 1.05rem;
     font-weight: 600;
     color: var(--green-deep);
+    margin-bottom: 4px;
+}
+
+.chart-subtitle {
+    font-size: 0.82rem;
+    color: var(--gray-400);
     margin-bottom: 16px;
 }
 
@@ -292,6 +298,132 @@ header {
     position: relative;
     width: 100%;
     max-height: 420px;
+}
+
+.chart-container--breakdown {
+    max-height: 320px;
+}
+
+/* ==========================================================================
+   Info icon
+   ========================================================================== */
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 0.95rem;
+    color: var(--green-mid);
+    text-decoration: none;
+    vertical-align: middle;
+    margin-left: 6px;
+    border-radius: 50%;
+    transition: color 0.15s;
+    line-height: 1;
+}
+
+.info-icon:hover {
+    color: var(--green-deep);
+}
+
+/* ==========================================================================
+   Carbon emissions card
+   ========================================================================== */
+
+.carbon-card {
+    margin-top: 20px;
+}
+
+.carbon-card h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--green-deep);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.carbon-source-note {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.carbon-grid {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.carbon-scenario {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    border: 1.5px solid var(--gray-200);
+}
+
+.carbon-scenario--solar {
+    border-color: var(--green-light);
+    background: #F0FFF4;
+}
+
+.carbon-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+}
+
+.carbon-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--charcoal);
+    line-height: 1.2;
+}
+
+.carbon-value span {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.carbon-value--zero {
+    color: var(--green-deep);
+}
+
+.carbon-tons {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--gray-400);
+}
+
+.carbon-divider {
+    font-size: 1.4rem;
+    color: var(--green-mid);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.carbon-savings {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.carbon-savings-badge {
+    display: inline-block;
+    background: var(--green-pale);
+    color: var(--green-deep);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
 }
 
 /* ==========================================================================
