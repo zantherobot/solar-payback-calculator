@@ -65,6 +65,42 @@ These apply to every change.
 - Calculation failures (e.g. unknown zip code, out-of-range inputs) must display a helpful message to the user and log the error server-side.
 - The app should never show a 500 error page to end users.
 
-## Deployment
+## Deployment & Branch Workflow
 
-Pushes to `main` auto-deploy to Railway. No manual steps needed.
+There are two environments, both hosted on Railway:
+
+| Branch | Environment | URL |
+|--------|-------------|-----|
+| `staging` | Staging (Railway staging env) | Railway staging URL |
+| `main` | Production (Railway production env) | Railway production URL |
+
+### Default behaviour
+- **All work targets `staging` by default.** Commit and push to `staging`; Railway auto-deploys.
+- **Never push or merge to `main` without explicit instruction.** Production is only updated when the user asks to promote, or confirms after being asked.
+
+### Promoting staging → production
+When asked (or after asking "Ready to promote to production?"):
+1. Ensure all tests pass on `staging`.
+2. Merge `staging` into `main` and push — Railway auto-deploys production.
+
+```bash
+git checkout main
+git merge staging
+git push origin main
+git checkout staging   # return to default working branch
+```
+
+### Typical feature workflow
+```
+work on staging branch
+       │
+       ▼  git push origin staging
+   staging  ──► auto-deploys to Railway staging env
+       │
+       │  (user confirms ready for production)
+       ▼  git merge staging → main
+     main  ──► auto-deploys to Railway production env
+```
+
+### Branch protection
+`main` has GitHub branch protection enabled: direct pushes are blocked, changes must come via PR or the merge step above.
