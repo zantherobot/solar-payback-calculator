@@ -185,6 +185,56 @@ A collapsible "Advanced Settings" panel below the main inputs, collapsed by defa
 
 ---
 
+## Projected Monthly Utility Bill with Solar
+
+Displayed as a stat card labeled **"Monthly Utility Bill (Yr 1 est.)"** — the estimated monthly electricity bill a homeowner will owe their utility in Year 1 after solar is installed.
+
+### Components
+
+**1. Base charge** — fixed monthly customer charge owed regardless of solar production:
+
+| Utility | Amount |
+|---|---|
+| PG&E | $24/month |
+| SCE | $10/month |
+
+Stored as `base_charge_monthly` in `TOU_RATES` in `data.py`.
+
+**2. Residual energy charge** — cost of grid electricity not covered by solar:
+
+```
+residual_grid_kwh = max(0, annual_consumption_kwh - self_consumed_kwh)
+gross_energy_charge = residual_grid_kwh × avg_rate
+```
+
+- `annual_consumption_kwh` = `(monthly_bill × 12) / avg_rate`
+- `self_consumed_kwh` = `annual_production_kwh × self_consumption_ratio`
+- `avg_rate` used for residual consumption (mix of peak and off-peak hours)
+
+**3. NEM 3.0 export credit offset:**
+
+```
+export_credits = exported_kwh × NEM3_EXPORT_RATE  ($0.05/kWh)
+```
+
+Where `exported_kwh = annual_production_kwh − self_consumed_kwh`
+
+**4. Monthly projected utility bill:**
+
+```
+monthly_utility_bill = base_charge + max(0, gross_energy_charge − export_credits) / 12
+```
+
+The `max(0, ...)` ensures export credits cannot make the energy charge negative (NEM 3.0 does not pay out net surplus monthly). The base charge is always owed on top.
+
+### Notes
+
+- Uses **Year 1 baseline values**: no rate escalation, no panel degradation — representing the bill in the first year after installation
+- If solar over-generates relative to consumption, the bill floors at `base_charge`
+- Stored as `monthly_utility_bill_with_solar` on `SolarResults`
+
+---
+
 ## Resolved Decisions
 
 1. **Loan and Cash Purchase** both supported — user selects via radio button

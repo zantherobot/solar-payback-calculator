@@ -170,8 +170,8 @@
                 <p class="stat-value">${{ "{:,.0f}".format(results.total_cost) }}</p>
             </div>
             <div class="card stat-card">
-                <p class="stat-label">Monthly Electricity Bill</p>
-                <p class="stat-value">${{ "{:,.0f}".format(form.monthly_bill | float) }}</p>
+                <p class="stat-label">Monthly Utility Bill <span class="stat-label-note">(Yr 1 est.)</span></p>
+                <p class="stat-value">${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
             </div>
             <div class="card stat-card">
                 {% if results.financing_type == 'loan' %}

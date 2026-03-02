@@ -83,6 +83,7 @@ TOU_RATES = {
         "offpeak": 0.30,
         "weighted_avg": 0.36,
         "zero_carbon_pct": 0.98,  # 98% zero-carbon (CEC 2024 Power Content Label)
+        "base_charge_monthly": 24.00,  # PG&E minimum monthly bill (NEM 3.0 grid participation charge)
     },
     "SCE": {
         "plan_name": "TOU-D-Prime",
@@ -90,6 +91,7 @@ TOU_RATES = {
         "offpeak": 0.27,
         "weighted_avg": 0.35,
         "zero_carbon_pct": 0.49,  # 49% zero-carbon (CEC 2024 Power Content Label)
+        "base_charge_monthly": 10.00,  # SCE minimum monthly customer charge
     },
 }
 

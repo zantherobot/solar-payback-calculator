@@ -40,6 +40,7 @@ class SolarResults:
     battery_cost: float
     total_cost: float
     monthly_payment: float  # 0 for cash purchase
+    monthly_utility_bill_with_solar: float  # projected Year 1 utility bill after solar
     year1_savings: float
 
     # Self-consumption
@@ -143,7 +144,20 @@ def calculate(
             monthly_payment = total_cost / n_payments
 
     # ------------------------------------------------------------------
-    # 7. 20-year projection
+    # 7. Projected Year 1 monthly utility bill with solar
+    # ------------------------------------------------------------------
+    # Uses baseline values (no rate escalation, no panel degradation) to
+    # represent the bill in the first year after solar is installed.
+    base_charge = tou["base_charge_monthly"]
+    self_consumed_yr1 = annual_production * self_consumption_ratio
+    exported_yr1 = annual_production - self_consumed_yr1
+    residual_grid_kwh = max(0.0, annual_consumption - self_consumed_yr1)
+    gross_energy_charge = residual_grid_kwh * avg_rate
+    export_credits_yr1 = exported_yr1 * NEM3_EXPORT_RATE
+    monthly_utility_bill_with_solar = base_charge + max(0.0, gross_energy_charge - export_credits_yr1) / 12
+
+    # ------------------------------------------------------------------
+    # 8. 20-year projection
     # ------------------------------------------------------------------
     esc = rate_escalation / 100
     deg = panel_degradation / 100
@@ -268,6 +282,7 @@ def calculate(
         battery_cost=round(battery_cost, 2),
         total_cost=round(total_cost, 2),
         monthly_payment=round(monthly_payment, 2),
+        monthly_utility_bill_with_solar=round(monthly_utility_bill_with_solar, 2),
         year1_savings=round(year1_savings, 2),
         self_consumption_ratio=round(self_consumption_ratio * 100, 1),
         payback_years=round(payback_years, 2) if payback_years else None,

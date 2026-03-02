@@ -264,6 +264,13 @@ header {
     margin-bottom: 6px;
 }
 
+.stat-label-note {
+    font-size: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.75;
+}
+
 .stat-value {
     font-size: 1.5rem;
     font-weight: 700;
