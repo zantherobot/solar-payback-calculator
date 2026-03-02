@@ -81,13 +81,13 @@ There are two environments, both hosted on Railway:
 ### Promoting staging → production
 When asked (or after asking "Ready to promote to production?"):
 1. Ensure all tests pass on `staging`.
-2. Merge `staging` into `main` and push — Railway auto-deploys production.
+2. Open and merge a PR from `staging` → `main` — Railway auto-deploys production.
 
 ```bash
-git checkout main
-git merge staging
-git push origin main
-git checkout staging   # return to default working branch
+gh pr create --base main --head staging \
+  --title "Promote staging → production" --body ""
+gh pr merge --merge
+# gh leaves you on staging automatically
 ```
 
 ### Typical feature workflow
@@ -98,9 +98,10 @@ work on staging branch
    staging  ──► auto-deploys to Railway staging env
        │
        │  (user confirms ready for production)
-       ▼  git merge staging → main
+       ▼  gh pr create + gh pr merge
      main  ──► auto-deploys to Railway production env
 ```
 
 ### Branch protection
-`main` has GitHub branch protection enabled: direct pushes are blocked, changes must come via PR or the merge step above.
+`main` has GitHub branch protection enabled: direct pushes are blocked,
+all changes must arrive via PR (no approvals required for solo use).
