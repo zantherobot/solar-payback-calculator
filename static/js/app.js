@@ -73,8 +73,9 @@ function applyResults(data) {
                       ' + Utility $' + fmtNum(data.monthly_utility_bill_with_solar) + '</p>' +
                   '</div>' +
                   '<div class="monthly-savings-col">' +
-                    '<span class="monthly-savings-badge">$' + fmtNum(savings) +
-                      '/mo less than current utility bill</span>' +
+                    (savings >= 0
+                      ? '<span class="monthly-savings-badge">$' + fmtNum(savings) + '/mo less than current utility bill</span>'
+                      : '<span class="monthly-savings-badge monthly-savings-badge--over">$' + fmtNum(-savings) + '/mo more than current utility bill</span>') +
                   '</div>' +
                 '</div>';
         } else {
