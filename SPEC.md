@@ -131,7 +131,7 @@ When the user selects cash purchase, the full system cost is applied at year 0 o
 
 ### Layout
 
-1. **Input section** (top or left): Clean form with the 4 inputs + "Calculate" button
+1. **Input section** (top or left): Clean form with the 4 inputs. No Calculate button — results update automatically as inputs change (see Live Update below).
 2. **Results section** (below or right):
    - Big headline card: "Monthly Cost with Solar" (loan) or "Estimated Payback Period" (cash purchase)
    - 20-year comparison chart (bar or line chart showing cumulative cost curves)
@@ -316,6 +316,20 @@ Displayed as a card in the results section with:
 - "CO₂ avoided per year" badge showing the difference (lbs and metric tons), omitted when difference is zero
 - Attribution line: utility name, zero-carbon %, and a link to the CEC Annual Power Content Label for the source data
 - When solar fully offsets consumption (`annual_co2_with_solar_lbs == 0`), the with-solar value displays as "0 lbs CO₂/yr" with the note "Solar fully offsets your consumption"
+
+---
+
+## Live Update (AJAX)
+
+Results update automatically without a page reload or Calculate button.
+
+- A `/calculate` POST endpoint accepts the same form fields and returns JSON.
+- JavaScript listens for `input` events on all number/text fields (debounced 400 ms) and `change` events on selects and radios (immediate).
+- Zip code fires on `blur` only, once the field is exactly 5 digits, to avoid mid-entry lookups.
+- The results section is always in the DOM but hidden until the first successful response.
+- Errors (invalid zip, out-of-range values) are shown inline without a page reload.
+- The `#results` element gets a `.results-updating` class during the fetch, which dims it slightly.
+- Charts are created on first render and updated in-place (`chart.update("none")`) on subsequent calls to avoid re-animation flicker.
 
 ---
 

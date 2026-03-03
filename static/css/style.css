@@ -164,30 +164,13 @@ header {
     margin-top: 16px;
 }
 
-/* Calculate button */
-.btn-calculate {
-    display: block;
-    width: 100%;
-    margin-top: 28px;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%);
-    color: var(--white);
-    font-size: 1rem;
-    font-weight: 600;
-    font-family: inherit;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
+/* Results section — subtle fade while an update is in flight */
+#results {
+    transition: opacity 0.15s;
 }
 
-.btn-calculate:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(45, 106, 79, 0.3);
-}
-
-.btn-calculate:active {
-    transform: translateY(0);
+#results.results-updating {
+    opacity: 0.6;
 }
 
 /* ==========================================================================
@@ -526,35 +509,6 @@ footer p {
     width: 17px;
     height: 17px;
     cursor: pointer;
-}
-
-/* ==========================================================================
-   Calculation complete banner
-   ========================================================================== */
-
-.calc-complete-banner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--primary);
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    opacity: 1;
-    transition: opacity 0.8s ease;
-}
-
-.calc-complete-banner::before {
-    content: "✓";
-    font-size: 1.1rem;
-    font-weight: 700;
-}
-
-.calc-complete-banner--fade {
-    opacity: 0;
 }
 
 /* ==========================================================================

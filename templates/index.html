@@ -39,6 +39,7 @@
         {{ error }}
     </div>
     {% endif %}
+    <div id="live-error" class="error-banner" style="display:none"></div>
 
     <form method="POST" action="/" id="calc-form">
         <div class="card form-card">
@@ -137,43 +138,36 @@
                     </div>
                 </div>
             </details>
-
-            <button type="submit" class="btn-calculate">Calculate Payback</button>
         </div>
     </form>
 
-    {% if results %}
-    <div id="calc-complete-banner" class="calc-complete-banner" role="status" aria-live="polite">
-        Calculation complete!
-    </div>
-    <section id="results">
+    <!-- Results: always in DOM; hidden until first successful calculation -->
+    <section id="results" {% if not results %}style="display:none"{% endif %}>
+
         <!-- Payback / Monthly Cost headline -->
-        <div class="card payback-card">
-            {% if results.financing_type == 'loan' %}
-            {% set monthly_with_solar = results.monthly_payment + results.monthly_utility_bill_with_solar %}
-            {% set current_bill = form.monthly_bill | float %}
-            {% set monthly_savings = current_bill - monthly_with_solar %}
-            <p class="payback-label">Monthly Cost with Solar</p>
-            <div class="monthly-cost-compare">
-                <div class="monthly-cost-col">
-                    <p class="payback-value">${{ "{:,.0f}".format(monthly_with_solar) }}<span class="payback-unit">/mo</span></p>
-                    <p class="monthly-cost-sublabel">Loan ${{ "{:,.0f}".format(results.monthly_payment) }} + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
+        <div class="card payback-card" id="payback-card">
+            {% if results %}
+                {% if results.financing_type == 'loan' %}
+                {% set monthly_with_solar = results.monthly_payment + results.monthly_utility_bill_with_solar %}
+                {% set monthly_savings = form.monthly_bill | float - monthly_with_solar %}
+                <p class="payback-label">Monthly Cost with Solar</p>
+                <div class="monthly-cost-compare">
+                    <div class="monthly-cost-col">
+                        <p class="payback-value">${{ "{:,.0f}".format(monthly_with_solar) }}<span class="payback-unit">/mo</span></p>
+                        <p class="monthly-cost-sublabel">Loan ${{ "{:,.0f}".format(results.monthly_payment) }} + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
+                    </div>
+                    <div class="monthly-savings-col">
+                        <span class="monthly-savings-badge">${{ "{:,.0f}".format(monthly_savings) }}/mo less than current utility bill</span>
+                    </div>
                 </div>
-                <div class="monthly-savings-col">
-                    <span class="monthly-savings-badge">${{ "{:,.0f}".format(monthly_savings) }}/mo less</span>
-                </div>
-                <div class="monthly-cost-col">
-                    <p class="payback-value">${{ "{:,.0f}".format(current_bill) }}<span class="payback-unit">/mo</span></p>
-                    <p class="monthly-cost-sublabel">Current bill</p>
-                </div>
-            </div>
-            {% else %}
-            <p class="payback-label">Estimated Payback Period</p>
-            <p class="payback-value">{{ results.payback_display }}</p>
-            <p class="payback-meta">
-                {{ results.utility }} &middot; {{ results.plan_name }} &middot;
-                {{ results.peak_sun_hours }} avg. peak sun hours/day
-            </p>
+                {% else %}
+                <p class="payback-label">Estimated Payback Period</p>
+                <p class="payback-value">{{ results.payback_display }}</p>
+                <p class="payback-meta">
+                    {{ results.utility }} &middot; {{ results.plan_name }} &middot;
+                    {{ results.peak_sun_hours }} avg. peak sun hours/day
+                </p>
+                {% endif %}
             {% endif %}
         </div>
 
@@ -181,40 +175,42 @@
         <div class="stats-grid">
             <div class="card stat-card">
                 <p class="stat-label">Monthly Production</p>
-                <p class="stat-value">{{ "{:,.0f}".format(results.monthly_production_kwh) }} <span>kWh</span></p>
+                <p class="stat-value" id="val-monthly-production">{% if results %}{{ "{:,.0f}".format(results.monthly_production_kwh) }} <span>kWh</span>{% endif %}</p>
             </div>
             <div class="card stat-card">
                 <p class="stat-label">Electricity Offset</p>
-                <p class="stat-value">{{ results.offset_pct }}%</p>
+                <p class="stat-value" id="val-offset">{% if results %}{{ results.offset_pct }}%{% endif %}</p>
             </div>
             <div class="card stat-card">
                 <p class="stat-label">Year 1 Savings</p>
-                <p class="stat-value">${{ "{:,.0f}".format(results.year1_savings) }}</p>
+                <p class="stat-value" id="val-year1-savings">{% if results %}${{ "{:,.0f}".format(results.year1_savings) }}{% endif %}</p>
             </div>
             <div class="card stat-card">
                 <p class="stat-label">Net System Cost</p>
-                <p class="stat-value">${{ "{:,.0f}".format(results.total_cost) }}</p>
+                <p class="stat-value" id="val-total-cost">{% if results %}${{ "{:,.0f}".format(results.total_cost) }}{% endif %}</p>
             </div>
             <div class="card stat-card">
                 <p class="stat-label">Monthly Utility Bill <span class="stat-label-note">(Yr 1 est.)</span></p>
-                <p class="stat-value">${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
+                <p class="stat-value" id="val-monthly-utility">{% if results %}${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}{% endif %}</p>
             </div>
-            <div class="card stat-card">
-                {% if results.financing_type == 'loan' %}
-                <p class="stat-label">Monthly Loan Payment</p>
-                <p class="stat-value">${{ "{:,.0f}".format(results.monthly_payment) }}</p>
-                {% else %}
-                <p class="stat-label">Financing</p>
-                <p class="stat-value" style="font-size:1.1rem;">Cash Purchase</p>
+            <div class="card stat-card" id="stat-financing-card">
+                {% if results %}
+                    {% if results.financing_type == 'loan' %}
+                    <p class="stat-label">Monthly Loan Payment</p>
+                    <p class="stat-value">${{ "{:,.0f}".format(results.monthly_payment) }}</p>
+                    {% else %}
+                    <p class="stat-label">Financing</p>
+                    <p class="stat-value" style="font-size:1.1rem;">Cash Purchase</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="card stat-card">
                 <p class="stat-label">Self-Consumption</p>
-                <p class="stat-value">{{ results.self_consumption_ratio }}%</p>
+                <p class="stat-value" id="val-self-consumption">{% if results %}{{ results.self_consumption_ratio }}%{% endif %}</p>
             </div>
         </div>
 
-        <!-- Chart -->
+        <!-- 20-year chart -->
         <div class="card chart-card">
             <h2>20-Year Cumulative Cost Comparison</h2>
             <div class="chart-container">
@@ -234,42 +230,52 @@
         <!-- Carbon emissions card -->
         <div class="card carbon-card">
             <h2>Carbon Emissions</h2>
-            <p class="carbon-source-note">
+            <p class="carbon-source-note" id="carbon-source-note">
+                {% if results %}
                 Based on {{ results.utility }} grid: {{ (results.zero_carbon_pct * 100) | int }}% zero-carbon
                 ({{ results.plan_name }} default plan &middot; <a href="https://www.energy.ca.gov/programs-and-topics/programs/power-source-disclosure-program/power-content-label/annual-power-5"
                    target="_blank" rel="noopener noreferrer">CEC 2024 Power Content Label</a>).
                 Intensity varies by rate plan.
+                {% endif %}
             </p>
             <div class="carbon-grid">
                 <div class="carbon-scenario">
                     <p class="carbon-label">Without Solar</p>
-                    <p class="carbon-value">{{ "{:,.0f}".format(results.annual_co2_no_solar_lbs) }} <span>lbs CO&#x2082;/yr</span></p>
-                    <p class="carbon-tons">≈ {{ "%.1f"|format(results.annual_co2_no_solar_lbs / 2205) }} metric tons</p>
+                    <p class="carbon-value" id="carbon-no-solar-value">{% if results %}{{ "{:,.0f}".format(results.annual_co2_no_solar_lbs) }} <span>lbs CO&#x2082;/yr</span>{% endif %}</p>
+                    <p class="carbon-tons" id="carbon-no-solar-tons">{% if results %}&asymp; {{ "%.1f"|format(results.annual_co2_no_solar_lbs / 2205) }} metric tons{% endif %}</p>
                 </div>
-                <div class="carbon-divider">→</div>
+                <div class="carbon-divider">&rarr;</div>
                 <div class="carbon-scenario carbon-scenario--solar">
                     <p class="carbon-label">With Solar</p>
-                    {% if results.annual_co2_with_solar_lbs == 0 %}
-                    <p class="carbon-value carbon-value--zero">0 <span>lbs CO&#x2082;/yr</span></p>
-                    <p class="carbon-tons">Solar fully offsets your consumption</p>
-                    {% else %}
-                    <p class="carbon-value">{{ "{:,.0f}".format(results.annual_co2_with_solar_lbs) }} <span>lbs CO&#x2082;/yr</span></p>
-                    <p class="carbon-tons">≈ {{ "%.1f"|format(results.annual_co2_with_solar_lbs / 2205) }} metric tons</p>
-                    {% endif %}
+                    <div id="carbon-with-solar-section">
+                        {% if results %}
+                            {% if results.annual_co2_with_solar_lbs == 0 %}
+                            <p class="carbon-value carbon-value--zero">0 <span>lbs CO&#x2082;/yr</span></p>
+                            <p class="carbon-tons">Solar fully offsets your consumption</p>
+                            {% else %}
+                            <p class="carbon-value">{{ "{:,.0f}".format(results.annual_co2_with_solar_lbs) }} <span>lbs CO&#x2082;/yr</span></p>
+                            <p class="carbon-tons">&asymp; {{ "%.1f"|format(results.annual_co2_with_solar_lbs / 2205) }} metric tons</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            {% set co2_avoided = results.annual_co2_no_solar_lbs - results.annual_co2_with_solar_lbs %}
-            {% if co2_avoided > 0 %}
-            <div class="carbon-savings">
-                <span class="carbon-savings-badge">
-                    {{ "{:,.0f}".format(co2_avoided) }} lbs CO&#x2082; avoided per year
-                    (≈ {{ "%.1f"|format(co2_avoided / 2205) }} metric tons)
-                </span>
+            <div id="carbon-savings-section">
+                {% if results %}
+                {% set co2_avoided = results.annual_co2_no_solar_lbs - results.annual_co2_with_solar_lbs %}
+                {% if co2_avoided > 0 %}
+                <div class="carbon-savings">
+                    <span class="carbon-savings-badge">
+                        {{ "{:,.0f}".format(co2_avoided) }} lbs CO&#x2082; avoided per year
+                        (&asymp; {{ "%.1f"|format(co2_avoided / 2205) }} metric tons)
+                    </span>
+                </div>
+                {% endif %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
+
     </section>
-    {% endif %}
 
 </main>
 

@@ -44,11 +44,11 @@ def test_app_rejects_system_kw_zero(client):
 
 
 def test_app_accepts_system_kw_at_minimum(client):
-    """Exactly 0.5 kW is the lower bound and must succeed (no error banner)."""
+    """Exactly 0.5 kW is the lower bound and must succeed (no validation error message)."""
     data = {**VALID_FORM, "system_kw": "0.5"}
     resp = client.post("/", data=data)
     assert resp.status_code == 200
-    assert b"error-banner" not in resp.data
+    assert b"System size must be between" not in resp.data
 
 
 def test_app_rejects_system_kw_above_maximum(client):
@@ -88,6 +88,71 @@ def test_app_cash_shows_payback_period_section(client):
     assert resp.status_code == 200
     assert b"Estimated Payback Period" in resp.data
     assert b"Monthly Cost with Solar" not in resp.data
+
+
+# ---------------------------------------------------------------------------
+# /calculate JSON endpoint
+# ---------------------------------------------------------------------------
+
+_CALC_EXPECTED_KEYS = {
+    "financing_type", "monthly_payment", "monthly_utility_bill_with_solar",
+    "monthly_bill", "payback_display", "utility", "plan_name", "peak_sun_hours",
+    "monthly_production_kwh", "offset_pct", "year1_savings", "total_cost",
+    "self_consumption_ratio", "annual_co2_no_solar_lbs", "annual_co2_with_solar_lbs",
+    "zero_carbon_pct", "chart", "breakdown",
+}
+
+
+def test_calculate_api_returns_json(client):
+    """Valid POST to /calculate returns 200 with all expected top-level keys."""
+    resp = client.post("/calculate", data=VALID_FORM)
+    assert resp.status_code == 200
+    assert resp.content_type.startswith("application/json")
+    data = resp.get_json()
+    assert data is not None
+    assert _CALC_EXPECTED_KEYS.issubset(data.keys())
+
+
+def test_calculate_api_chart_has_21_points(client):
+    """chart.years, chart.noSolar, and chart.withSolar must each have 21 entries (years 0-20)."""
+    resp = client.post("/calculate", data=VALID_FORM)
+    data = resp.get_json()
+    assert len(data["chart"]["years"])    == 21
+    assert len(data["chart"]["noSolar"])  == 21
+    assert len(data["chart"]["withSolar"]) == 21
+
+
+def test_calculate_api_invalid_zip_returns_400(client):
+    """A non-CA zip returns 400 with an error key."""
+    data = {**VALID_FORM, "zip_code": "12345"}
+    resp = client.post("/calculate", data=data)
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert "error" in body
+
+
+def test_calculate_api_missing_system_kw_returns_400(client):
+    """Empty system_kw is not a valid float — endpoint must return 400."""
+    data = {**VALID_FORM, "system_kw": ""}
+    resp = client.post("/calculate", data=data)
+    assert resp.status_code == 400
+    assert "error" in resp.get_json()
+
+
+def test_calculate_api_cash_has_zero_monthly_payment(client):
+    """Cash purchase must yield monthly_payment == 0."""
+    data = {**VALID_FORM, "financing_type": "cash"}
+    resp = client.post("/calculate", data=data)
+    assert resp.status_code == 200
+    assert resp.get_json()["monthly_payment"] == 0
+
+
+def test_calculate_api_echoes_monthly_bill(client):
+    """monthly_bill in the response must equal the submitted form value."""
+    data = {**VALID_FORM, "monthly_bill": "300"}
+    resp = client.post("/calculate", data=data)
+    assert resp.status_code == 200
+    assert resp.get_json()["monthly_bill"] == 300.0
 
 
 def test_app_custom_battery_cost_affects_system_cost(client):
