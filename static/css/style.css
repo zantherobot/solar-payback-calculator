@@ -243,6 +243,41 @@ header {
     opacity: 0.8;
 }
 
+.monthly-cost-compare {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.monthly-cost-col {
+    text-align: center;
+}
+
+.monthly-cost-sublabel {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    opacity: 0.65;
+}
+
+.monthly-savings-col {
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.monthly-savings-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .payback-meta {
     margin-top: 10px;
     font-size: 0.82rem;

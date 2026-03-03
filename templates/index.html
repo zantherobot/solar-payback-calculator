@@ -150,12 +150,23 @@
         <!-- Payback / Monthly Cost headline -->
         <div class="card payback-card">
             {% if results.financing_type == 'loan' %}
+            {% set monthly_with_solar = results.monthly_payment + results.monthly_utility_bill_with_solar %}
+            {% set current_bill = form.monthly_bill | float %}
+            {% set monthly_savings = current_bill - monthly_with_solar %}
             <p class="payback-label">Monthly Cost with Solar</p>
-            <p class="payback-value">${{ "{:,.0f}".format(results.monthly_payment + results.monthly_utility_bill_with_solar) }}<span class="payback-unit">/mo</span></p>
-            <p class="payback-meta">
-                Loan ${{ "{:,.0f}".format(results.monthly_payment) }}/mo + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}/mo
-                &middot; vs. current bill ${{ "{:,.0f}".format(form.monthly_bill | float) }}/mo
-            </p>
+            <div class="monthly-cost-compare">
+                <div class="monthly-cost-col">
+                    <p class="payback-value">${{ "{:,.0f}".format(monthly_with_solar) }}<span class="payback-unit">/mo</span></p>
+                    <p class="monthly-cost-sublabel">Loan ${{ "{:,.0f}".format(results.monthly_payment) }} + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
+                </div>
+                <div class="monthly-savings-col">
+                    <span class="monthly-savings-badge">${{ "{:,.0f}".format(monthly_savings) }}/mo less</span>
+                </div>
+                <div class="monthly-cost-col">
+                    <p class="payback-value">${{ "{:,.0f}".format(current_bill) }}<span class="payback-unit">/mo</span></p>
+                    <p class="monthly-cost-sublabel">Current bill</p>
+                </div>
+            </div>
             {% else %}
             <p class="payback-label">Estimated Payback Period</p>
             <p class="payback-value">{{ results.payback_display }}</p>
