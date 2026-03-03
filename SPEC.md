@@ -4,7 +4,7 @@
 
 A public-facing web app that helps California homeowners estimate the financial payback of going solar (with optional battery storage) under NEM 3.0 rules. The first iteration is a simple, stateless calculator — no accounts or saved data.
 
-App title: **Solar and Battery California Calculator**
+App title: **Solar Calculator**
 
 ## Tech Stack
 
@@ -77,7 +77,7 @@ annual_consumption_kwh = (monthly_bill × 12) / weighted_avg_rate
   - **Exported solar**: valued at ~$0.04–0.08/kWh (ACC approximation, varies by hour)
   - Use a weighted average export rate rather than hour-by-hour simulation in v1
   - Export credits are held **flat** across all 20 years (no escalation). NEM 3.0 ACC rates are set periodically by the CPUC and have remained roughly stable; applying escalation would overstate future export value and is not supported by current rate trends.
-- Self-consumption ratio estimate: ~40% without battery, ~70–80% with battery
+- Self-consumption ratio estimate: ~40% without battery, up to ~85% with battery
 
 ### Battery & TOU Load Shifting
 
@@ -87,8 +87,8 @@ annual_consumption_kwh = (monthly_bill × 12) / weighted_avg_rate
   - Increases self-consumption ratio, reducing low-value exports
   - Round-trip efficiency: 90%
 - TOU schedule: Use SCE TOU-D-Prime or PG&E E-TOU-C as default (based on zip code → utility territory)
-  - Off-peak: ~$0.25/kWh
-  - Peak (4–9 PM): ~$0.45–0.55/kWh
+  - Off-peak: ~$0.27–0.30/kWh
+  - Peak (4–9 PM): ~$0.49–0.54/kWh
   - These are hardcoded defaults for v1, noted as approximate
 
 ### Financial Assumptions (Defaults)
@@ -123,8 +123,6 @@ When the user selects cash purchase, the full system cost is applied at year 0 o
 
 **Why (N−1)?** Year 1 represents the first full year of ownership at today's rates and full panel output, consistent with the "Year 1 baseline" stat cards. Escalation and degradation compound starting in year 2. This is the standard convention for consumer-facing solar calculators (e.g., EnergySage, SunPower).
 
-**Note on year 1 stat card vs. chart consistency:** The chart's year 1 difference (`no_solar[1] − solar[1]`) will be close to but not identical to `year1_savings` on the stat card. Both use year 1 baseline values, but the chart's solar side values self-consumed energy at the off-peak TOU rate (midday solar displaces off-peak consumption per NEM 3.0), while the stat card uses the average blended rate for the residual grid charge. This methodological difference is intentional: the stat card uses a simpler, bill-offset model consistent with how homeowners read their utility bill; the chart uses a TOU-aware model that more accurately reflects time-of-use savings over 20 years.
-
 **Payback period** = the year where cumulative solar savings exceed cumulative solar costs (i.e., the crossover point).
 
 ---
@@ -133,7 +131,7 @@ When the user selects cash purchase, the full system cost is applied at year 0 o
 
 ### Layout
 
-1. **Input section** (top or left): Clean form with the 4 inputs. No Calculate button — results update automatically as inputs change (see Live Update below).
+1. **Input section** (top or left): Clean form with the 4 inputs. A **Calculate** button triggers an immediate recalculation. Results also update automatically as inputs change without pressing Calculate (see Live Update below).
 2. **Results section** (below or right):
    - Big headline card: "Monthly Cost with Solar" (loan) or "Estimated Payback Period" (cash purchase)
    - 20-year comparison chart (bar or line chart showing cumulative cost curves)
@@ -323,11 +321,12 @@ Displayed as a card in the results section with:
 
 ## Live Update (AJAX)
 
-Results update automatically without a page reload or Calculate button.
+Results update automatically without a page reload. A **Calculate** button is also available for explicit, immediate recalculation.
 
 - A `/calculate` POST endpoint accepts the same form fields and returns JSON.
 - JavaScript listens for `input` events on all number/text fields (debounced 400 ms) and `change` events on selects and radios (immediate).
 - Zip code fires on `blur` only, once the field is exactly 5 digits, to avoid mid-entry lookups.
+- The **Calculate** button triggers an immediate recalculation, canceling any pending debounce.
 - The results section is always in the DOM but hidden until the first successful response.
 - Errors (invalid zip, out-of-range values) are shown inline without a page reload.
 - The `#results` element gets a `.results-updating` class during the fetch, which dims it slightly.
