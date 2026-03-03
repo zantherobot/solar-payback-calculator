@@ -485,6 +485,35 @@ footer p {
     font-size: 0.75rem;
 }
 
+.footer-built-by {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.footer-built-by a {
+    color: var(--gray-400);
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.15s;
+}
+
+.footer-built-by a:hover {
+    color: #0A66C2;
+}
+
+.footer-gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.footer-gh-link:hover {
+    color: var(--charcoal) !important;
+}
+
 /* ==========================================================================
    Financing radio group
    ========================================================================== */
