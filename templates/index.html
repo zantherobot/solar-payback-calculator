@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Payback Calculator</title>
+    <title>Solar and Battery California Calculator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
                 <line x1="4.7" y1="27.3" x2="8.9" y2="23.1" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
                 <line x1="23.1" y1="8.9" x2="27.3" y2="4.7" stroke="#F4A261" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
-            <h1>Solar Payback Calculator</h1>
+            <h1>Solar and Battery California Calculator</h1>
         </div>
         <p class="subtitle">Estimate your solar savings under California NEM 3.0</p>
     </div>
@@ -57,7 +57,7 @@
                            placeholder="e.g. 250" min="1" step="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="zip_code">Zip Code</label>
+                    <label for="zip_code">California Zip Code</label>
                     <input type="text" id="zip_code" name="zip_code"
                            value="{{ form.zip_code }}"
                            placeholder="e.g. 90210" maxlength="5" pattern="\d{5}" required>
@@ -147,14 +147,23 @@
         Calculation complete!
     </div>
     <section id="results">
-        <!-- Payback headline -->
+        <!-- Payback / Monthly Cost headline -->
         <div class="card payback-card">
+            {% if results.financing_type == 'loan' %}
+            <p class="payback-label">Monthly Cost with Solar</p>
+            <p class="payback-value">${{ "{:,.0f}".format(results.monthly_payment + results.monthly_utility_bill_with_solar) }}<span class="payback-unit">/mo</span></p>
+            <p class="payback-meta">
+                Loan ${{ "{:,.0f}".format(results.monthly_payment) }}/mo + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}/mo
+                &middot; vs. current bill ${{ "{:,.0f}".format(form.monthly_bill | float) }}/mo
+            </p>
+            {% else %}
             <p class="payback-label">Estimated Payback Period</p>
             <p class="payback-value">{{ results.payback_display }}</p>
             <p class="payback-meta">
                 {{ results.utility }} &middot; {{ results.plan_name }} &middot;
                 {{ results.peak_sun_hours }} avg. peak sun hours/day
             </p>
+            {% endif %}
         </div>
 
         <!-- Stats cards -->

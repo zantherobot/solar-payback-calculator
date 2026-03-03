@@ -1,8 +1,10 @@
-# Solar Payback Calculator — Product Spec
+# Solar and Battery California Calculator — Product Spec
 
 ## Overview
 
 A public-facing web app that helps California homeowners estimate the financial payback of going solar (with optional battery storage) under NEM 3.0 rules. The first iteration is a simple, stateless calculator — no accounts or saved data.
+
+App title: **Solar and Battery California Calculator**
 
 ## Tech Stack
 
@@ -21,7 +23,7 @@ A public-facing web app that helps California homeowners estimate the financial 
 |---|---|---|
 | **System size** | Number (kW) | Manual entry, e.g. 4–15 kW |
 | **Avg. monthly electricity bill** | Currency ($) | Pre-solar monthly bill |
-| **Zip code** | Text (5-digit) | Used to look up solar irradiance and utility rate/TOU schedule |
+| **California Zip code** | Text (5-digit) | Used to look up solar irradiance and utility rate/TOU schedule. Field is labeled "California Zip Code" to reinforce CA-only scope. |
 | **Battery** | Dropdown select | `None`, `Tesla Powerwall 3 (13.5 kWh)`, `Enphase IQ 5P (5 kWh)`, `Franklin WH (13.6 kWh)`, `Custom (enter kWh)` |
 
 ---
@@ -30,7 +32,9 @@ A public-facing web app that helps California homeowners estimate the financial 
 
 ### Primary
 
-- **Estimated payback period** (years + months)
+- **Headline result card** — content depends on financing type:
+  - **Loan**: "Monthly Cost with Solar" — shows combined monthly loan payment + projected Year 1 utility bill, compared to the current pre-solar monthly bill (e.g. "Loan $151/mo + Utility $61/mo · vs. current bill $250/mo").
+  - **Cash Purchase**: "Estimated Payback Period" (years + months).
 - **20-year cost comparison table/chart**: cumulative payments to electric company (no solar) vs. cumulative payments to solar company (loan) over 20 years
 
 ### Secondary (displayed alongside)
@@ -129,7 +133,7 @@ When the user selects cash purchase, the full system cost is applied at year 0 o
 
 1. **Input section** (top or left): Clean form with the 4 inputs + "Calculate" button
 2. **Results section** (below or right):
-   - Big headline number: "Estimated payback: **X years**"
+   - Big headline card: "Monthly Cost with Solar" (loan) or "Estimated Payback Period" (cash purchase)
    - 20-year comparison chart (bar or line chart showing cumulative cost curves)
    - Summary stats cards (monthly production, offset %, year-1 savings, net cost)
 3. **Disclaimer footer**: "Estimates only. Actual results vary based on roof orientation, shading, utility rates, and other factors."

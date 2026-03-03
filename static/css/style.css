@@ -237,6 +237,12 @@ header {
     line-height: 1.2;
 }
 
+.payback-unit {
+    font-size: 1.2rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
 .payback-meta {
     margin-top: 10px;
     font-size: 0.82rem;

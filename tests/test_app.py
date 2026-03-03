@@ -62,6 +62,34 @@ def test_app_rejects_system_kw_above_maximum(client):
 # custom_battery_cost_per_kwh wired through to results
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Headline card: monthly cost (loan) vs. payback period (cash)
+# ---------------------------------------------------------------------------
+
+def test_app_loan_shows_monthly_cost_section(client):
+    """
+    When financing_type=loan, the headline card must show 'Monthly Cost with Solar'
+    and NOT show 'Estimated Payback Period'.
+    """
+    data = {**VALID_FORM, "financing_type": "loan"}
+    resp = client.post("/", data=data)
+    assert resp.status_code == 200
+    assert b"Monthly Cost with Solar" in resp.data
+    assert b"Estimated Payback Period" not in resp.data
+
+
+def test_app_cash_shows_payback_period_section(client):
+    """
+    When financing_type=cash, the headline card must show 'Estimated Payback Period'
+    and NOT show 'Monthly Cost with Solar'.
+    """
+    data = {**VALID_FORM, "financing_type": "cash"}
+    resp = client.post("/", data=data)
+    assert resp.status_code == 200
+    assert b"Estimated Payback Period" in resp.data
+    assert b"Monthly Cost with Solar" not in resp.data
+
+
 def test_app_custom_battery_cost_affects_system_cost(client):
     """
     Submitting a non-default custom_battery_cost_per_kwh with a custom battery
