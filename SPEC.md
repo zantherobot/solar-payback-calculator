@@ -206,16 +206,20 @@ Displayed as a stat card labeled **"Monthly Utility Bill (Yr 1 est.)"** — the 
 
 Stored as `base_charge_monthly` in `TOU_RATES` in `data.py`.
 
-**2. Residual energy charge** — cost of grid electricity not covered by solar:
+**2. Self-consumed solar value** — solar used on-site, valued at TOU rates:
 
 ```
-residual_grid_kwh = max(0, annual_consumption_kwh - self_consumed_kwh)
-gross_energy_charge = residual_grid_kwh × avg_rate
+# No battery: all self-consumption is direct midday use → off-peak rate
+self_consumed_value = self_consumed_kwh × offpeak_rate
+
+# With battery: direct midday use at off-peak, stored portion discharged at peak
+direct_frac = BASE_SELF_CONSUMPTION / self_consumption_ratio
+battery_frac = 1 − direct_frac
+self_consumed_value = self_consumed_kwh × direct_frac  × offpeak_rate
+                    + self_consumed_kwh × battery_frac × peak_rate
 ```
 
-- `annual_consumption_kwh` = `(monthly_bill × 12) / avg_rate`
-- `self_consumed_kwh` = `annual_production_kwh × self_consumption_ratio`
-- `avg_rate` used for residual consumption (mix of peak and off-peak hours)
+Using the TOU rate at the time of consumption (off-peak for midday, peak for battery discharge) gives the most accurate avoided-cost figure, and keeps the stat card methodology consistent with the 20-year loop.
 
 **3. NEM 3.0 export credit offset:**
 
@@ -228,16 +232,31 @@ Where `exported_kwh = annual_production_kwh − self_consumed_kwh`
 **4. Monthly projected utility bill:**
 
 ```
-monthly_utility_bill = base_charge + max(0, gross_energy_charge − export_credits) / 12
+annual_energy_charge = (monthly_bill − base_charge) × 12   # energy-only portion of current bill
+residual_energy      = max(0, annual_energy_charge − self_consumed_value − export_credits)
+monthly_utility_bill = base_charge + residual_energy / 12
 ```
 
-The `max(0, ...)` ensures export credits cannot make the energy charge negative (NEM 3.0 does not pay out net surplus monthly). The base charge is always owed on top.
+The energy charge is decomposed from the total bill so that solar savings only offset the energy portion. The base charge is always owed on top. The `max(0, ...)` ensures the residual energy charge can't go negative (NEM 3.0 does not pay out net surplus monthly).
 
 ### Notes
 
 - Uses **Year 1 baseline values**: no rate escalation, no panel degradation — representing the bill in the first year after installation
 - If solar over-generates relative to consumption, the bill floors at `base_charge`
 - Stored as `monthly_utility_bill_with_solar` on `SolarResults`
+
+### Battery Effect on the Bill
+
+A battery increases `self_consumption_ratio` (40% → up to 85%) and shifts the value of the additional self-consumed kWh from the off-peak rate ($0.30) to the peak rate ($0.49). Both effects reduce the residual energy charge, lowering the bill — and the peak-rate avoidance is what makes battery add-ons financially attractive under NEM 3.0.
+
+Self-consumption ratio with battery:
+```
+daily_excess         = daily_production × (1 − BASE_SELF_CONSUMPTION)
+daily_battery_capture = min(battery_kwh × BATTERY_ROUND_TRIP_EFF, daily_excess)
+self_consumption_ratio = min(BASE_SELF_CONSUMPTION + daily_battery_capture / daily_production,
+                             MAX_SELF_CONSUMPTION)
+```
+Constants: `BASE_SELF_CONSUMPTION = 0.40`, `MAX_SELF_CONSUMPTION = 0.85`, `BATTERY_ROUND_TRIP_EFF = 0.90`.
 
 ### Consistency with Year 1 Savings
 
