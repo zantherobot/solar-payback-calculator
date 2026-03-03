@@ -162,18 +162,21 @@ def test_no_solar_strictly_increases():
 def test_no_solar_escalates_at_correct_rate():
     """
     Year 1 uses current (baseline) rates — no escalation yet.
-    Year 2 is the first year where escalation compounds: bill × 12 × (1 + esc)^1.
+    Year 2 is the first year where escalation compounds.
     Convention: (yr − 1) exponent so year 1 is consistent with Year 1 stat cards.
+    The base charge is fixed; only the energy portion of the bill escalates.
+    Year 1 still equals monthly_bill × 12 because the esc factor is 1 (exponent 0).
     """
     monthly_bill = 200.0
     escalation = 4.0
+    base_charge = TOU_RATES["PGE"]["base_charge_monthly"]
     r = calculate(8.0, monthly_bill, PGE_ZIP, "none", rate_escalation=escalation)
-    # Year 1: no escalation (exponent = 0)
+    # Year 1: no escalation (exponent = 0) → equals the full monthly_bill * 12
     expected_year1 = monthly_bill * 12
     actual_year1 = r.cumulative_no_solar[1] - r.cumulative_no_solar[0]
     assert abs(actual_year1 - expected_year1) < 0.01
-    # Year 2: first escalation step (exponent = 1)
-    expected_year2 = monthly_bill * 12 * (1 + escalation / 100) ** 1
+    # Year 2: only the energy portion escalates; base charge stays fixed
+    expected_year2 = base_charge * 12 + (monthly_bill - base_charge) * 12 * (1 + escalation / 100) ** 1
     actual_year2 = r.cumulative_no_solar[2] - r.cumulative_no_solar[1]
     assert abs(actual_year2 - expected_year2) < 0.01
 
@@ -198,6 +201,22 @@ def test_custom_battery_cost():
     kwh = 10.0
     r = calculate(8.0, 250, PGE_ZIP, "custom", custom_battery_kwh=kwh)
     assert r.battery_cost == kwh * CUSTOM_BATTERY_COST_PER_KWH
+
+
+def test_custom_battery_cost_per_kwh_parameter():
+    """
+    Passing a non-default custom_battery_cost_per_kwh to calculate() must
+    change battery_cost proportionally, proving the parameter is wired through
+    and not silently ignored in favour of the module-level constant.
+    """
+    kwh = 10.0
+    custom_rate = 1200.0  # $/kWh — deliberately different from the $900 default
+    r = calculate(8.0, 250, PGE_ZIP, "custom", custom_battery_kwh=kwh,
+                  custom_battery_cost_per_kwh=custom_rate)
+    assert r.battery_cost == round(kwh * custom_rate, 2)
+    # Sanity-check: differs from the default-rate result
+    r_default = calculate(8.0, 250, PGE_ZIP, "custom", custom_battery_kwh=kwh)
+    assert r.battery_cost != r_default.battery_cost
 
 
 # ---------------------------------------------------------------------------

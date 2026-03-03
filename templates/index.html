@@ -96,7 +96,7 @@
             </div>
 
             <!-- Advanced Settings -->
-            <details class="advanced-settings" {% if form.cost_per_watt != '2.75' or form.loan_term != '20' or form.loan_apr != '5.5' or form.rate_escalation != '4.0' or form.panel_degradation != '0.5' %}open{% endif %}>
+            <details class="advanced-settings" {% if form.cost_per_watt != '2.75' or form.loan_term != '20' or form.loan_apr != '5.5' or form.rate_escalation != '4.0' or form.panel_degradation != '0.5' or form.custom_battery_cost_per_kwh != '900' %}open{% endif %}>
                 <summary>Advanced Settings</summary>
                 <div class="form-grid advanced-grid">
                     <div class="form-group">
@@ -128,6 +128,12 @@
                         <input type="number" id="panel_degradation" name="panel_degradation"
                                value="{{ form.panel_degradation }}"
                                min="0" max="2" step="0.1">
+                    </div>
+                    <div class="form-group" id="custom-battery-cost-group">
+                        <label for="custom_battery_cost_per_kwh">Custom Battery Cost ($/kWh installed)</label>
+                        <input type="number" id="custom_battery_cost_per_kwh" name="custom_battery_cost_per_kwh"
+                               value="{{ form.custom_battery_cost_per_kwh }}"
+                               min="500" max="1500" step="10">
                     </div>
                 </div>
             </details>

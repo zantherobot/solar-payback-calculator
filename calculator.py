@@ -78,6 +78,7 @@ def calculate(
     loan_apr: float = 5.5,
     rate_escalation: float = 4.0,
     panel_degradation: float = 0.5,
+    custom_battery_cost_per_kwh: float = CUSTOM_BATTERY_COST_PER_KWH,
 ) -> SolarResults:
     # ------------------------------------------------------------------
     # 1. Location lookups
@@ -95,7 +96,7 @@ def calculate(
     # ------------------------------------------------------------------
     if battery_key == "custom":
         battery_kwh = custom_battery_kwh
-        battery_cost = battery_kwh * CUSTOM_BATTERY_COST_PER_KWH
+        battery_cost = battery_kwh * custom_battery_cost_per_kwh
     else:
         _, battery_kwh, battery_cost = BATTERY_OPTIONS[battery_key]
 
@@ -203,7 +204,10 @@ def calculate(
         # --- No-solar annual cost ---
         # Year 1 uses current (baseline) rates; escalation compounds from year 2.
         # (yr - 1) exponent: yr=1 → factor 1 (no escalation), yr=2 → (1+esc)^1, etc.
-        no_solar_annual = monthly_bill * 12 * (1 + esc) ** (yr - 1)
+        # The base charge is held fixed (it is a regulated flat fee); only the energy
+        # portion escalates.  This matches how the with-solar path treats base_charge.
+        base_charge_annual = base_charge * 12
+        no_solar_annual = base_charge_annual + (monthly_bill - base_charge) * 12 * (1 + esc) ** (yr - 1)
         cum_ns += no_solar_annual
 
         # --- Solar production this year (degradation) ---
@@ -234,7 +238,6 @@ def calculate(
         # (fixed grid participation / customer charge) is always owed regardless
         # of how much the system produces. Without this floor, an oversized system
         # drives residual_grid to $0, hiding the monthly base charge on the chart.
-        base_charge_annual = base_charge * 12
         annual_energy = no_solar_annual - base_charge_annual
         residual_energy = max(0, annual_energy - self_consumed_value - export_credits)
         residual_grid = base_charge_annual + residual_energy

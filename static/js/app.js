@@ -8,11 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var customGroup = document.getElementById("custom-battery-group");
 
     function toggleCustom() {
-        if (batterySelect.value === "custom") {
-            customGroup.style.display = "";
-        } else {
-            customGroup.style.display = "none";
-        }
+        customGroup.style.display = batterySelect.value === "custom" ? "" : "none";
     }
 
     batterySelect.addEventListener("change", toggleCustom);

@@ -33,6 +33,7 @@ def index():
         "loan_apr": "5.5",
         "rate_escalation": "4.0",
         "panel_degradation": "0.5",
+        "custom_battery_cost_per_kwh": "900",
     }
 
     if request.method == "POST":
@@ -54,9 +55,10 @@ def index():
             loan_apr = float(form["loan_apr"])
             rate_esc = float(form["rate_escalation"])
             panel_deg = float(form["panel_degradation"])
+            custom_batt_cost = float(form["custom_battery_cost_per_kwh"])
 
             # Basic validation
-            if system_kw <= 0 or system_kw > 50:
+            if system_kw < 0.5 or system_kw > 50:
                 raise ValueError("System size must be between 0.5 and 50 kW.")
             if monthly_bill <= 0:
                 raise ValueError("Monthly bill must be a positive number.")
@@ -79,6 +81,7 @@ def index():
                 loan_apr=loan_apr,
                 rate_escalation=rate_esc,
                 panel_degradation=panel_deg,
+                custom_battery_cost_per_kwh=custom_batt_cost,
             )
 
             chart_data = json.dumps({
