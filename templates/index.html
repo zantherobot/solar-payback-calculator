@@ -96,6 +96,10 @@
                 </div>
             </div>
 
+            <div class="form-actions">
+                <button type="button" id="calc-btn" class="btn-calculate">Calculate</button>
+            </div>
+
             <!-- Advanced Settings -->
             <details class="advanced-settings" {% if form.cost_per_watt != '2.75' or form.loan_term != '20' or form.loan_apr != '5.5' or form.rate_escalation != '4.0' or form.panel_degradation != '0.5' or form.custom_battery_cost_per_kwh != '900' %}open{% endif %}>
                 <summary>Advanced Settings</summary>

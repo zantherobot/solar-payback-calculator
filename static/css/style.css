@@ -140,6 +140,35 @@ header {
     color: var(--gray-400);
 }
 
+/* Calculate button */
+.form-actions {
+    margin-top: 24px;
+}
+
+.btn-calculate {
+    display: inline-block;
+    padding: 11px 32px;
+    background: var(--green-deep);
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-calculate:hover {
+    background: var(--green-mid);
+    box-shadow: 0 2px 8px rgba(45, 106, 79, 0.25);
+}
+
+.btn-calculate:active {
+    background: var(--green-deep);
+    box-shadow: none;
+}
+
 /* Advanced settings */
 .advanced-settings {
     margin-top: 24px;

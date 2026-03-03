@@ -228,6 +228,15 @@ document.addEventListener("DOMContentLoaded", function () {
             recalculate();
         }
     });
+
+    // Calculate button: immediate recalculate.
+    var calcBtn = document.getElementById("calc-btn");
+    if (calcBtn) {
+        calcBtn.addEventListener("click", function () {
+            debouncedRecalc.cancel();
+            recalculate();
+        });
+    }
 });
 
 
