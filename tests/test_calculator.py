@@ -352,6 +352,33 @@ def test_monthly_utility_bill_manual_spot_check():
     assert abs(r.monthly_utility_bill_with_solar - expected) < 0.01
 
 
+def test_monthly_cost_exceeds_bill_for_large_loan_on_small_bill():
+    """
+    When the loan payment alone exceeds the original monthly bill, the total
+    monthly cost with solar (loan + residual utility) should be greater than
+    the original bill — the '$X/mo more than current utility bill' scenario.
+
+    8 kW system at $2.75/W = $22,000 → ~$151/mo loan payment.
+    Original bill $80/mo → loan payment alone exceeds the bill.
+    """
+    monthly_bill = 80.0
+    r = calculate(8.0, monthly_bill, PGE_ZIP, "none", financing_type="loan")
+    total_monthly_with_solar = r.monthly_payment + r.monthly_utility_bill_with_solar
+    assert total_monthly_with_solar > monthly_bill
+
+
+def test_monthly_cost_does_not_exceed_bill_for_typical_case():
+    """
+    For a typical high bill ($250/mo) with a standard 8 kW system on loan,
+    total monthly cost with solar should be less than the original bill
+    (the '$X/mo less than current utility bill' scenario).
+    """
+    monthly_bill = 250.0
+    r = calculate(8.0, monthly_bill, PGE_ZIP, "none", financing_type="loan")
+    total_monthly_with_solar = r.monthly_payment + r.monthly_utility_bill_with_solar
+    assert total_monthly_with_solar < monthly_bill
+
+
 # ---------------------------------------------------------------------------
 # Year 1 savings — consistent with stat card values
 # ---------------------------------------------------------------------------

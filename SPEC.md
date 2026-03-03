@@ -33,7 +33,9 @@ App title: **Solar and Battery California Calculator**
 ### Primary
 
 - **Headline result card** — content depends on financing type:
-  - **Loan**: "Monthly Cost with Solar" — shows combined monthly loan payment + projected Year 1 utility bill, compared to the current pre-solar monthly bill (e.g. "Loan $151/mo + Utility $61/mo · vs. current bill $250/mo").
+  - **Loan**: "Monthly Cost with Solar" — shows combined monthly loan payment + projected Year 1 utility bill, with a comparison badge:
+    - If total monthly cost with solar < current bill: **"$X/mo less than current utility bill"**
+    - If total monthly cost with solar ≥ current bill: **"$X/mo more than current utility bill"** (e.g. when loan payment alone exceeds the pre-solar bill)
   - **Cash Purchase**: "Estimated Payback Period" (years + months).
 - **20-year cost comparison table/chart**: cumulative payments to electric company (no solar) vs. cumulative payments to solar company (loan) over 20 years
 

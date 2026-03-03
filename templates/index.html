@@ -157,7 +157,11 @@
                         <p class="monthly-cost-sublabel">Loan ${{ "{:,.0f}".format(results.monthly_payment) }} + Utility ${{ "{:,.0f}".format(results.monthly_utility_bill_with_solar) }}</p>
                     </div>
                     <div class="monthly-savings-col">
+                        {% if monthly_savings >= 0 %}
                         <span class="monthly-savings-badge">${{ "{:,.0f}".format(monthly_savings) }}/mo less than current utility bill</span>
+                        {% else %}
+                        <span class="monthly-savings-badge monthly-savings-badge--over">${{ "{:,.0f}".format(-monthly_savings) }}/mo more than current utility bill</span>
+                        {% endif %}
                     </div>
                 </div>
                 {% else %}

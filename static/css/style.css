@@ -261,6 +261,11 @@ header {
     white-space: nowrap;
 }
 
+.monthly-savings-badge--over {
+    background: rgba(244, 162, 97, 0.25);
+    border-color: rgba(244, 162, 97, 0.5);
+}
+
 .payback-meta {
     margin-top: 10px;
     font-size: 0.82rem;
