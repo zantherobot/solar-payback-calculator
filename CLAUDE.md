@@ -103,6 +103,16 @@ work on staging branch
      main  ──► auto-deploys to Railway production env
 ```
 
+### Feature branch cleanup
+After merging a feature branch into `staging`, delete it immediately — both locally and on the remote:
+
+```bash
+git branch -d <branch-name>
+git push origin --delete <branch-name>
+```
+
+Only `staging` and `main` should exist at any time.
+
 ### Branch protection
 `main` has GitHub branch protection enabled: direct pushes are blocked,
 all changes must arrive via PR (no approvals required for solo use).
