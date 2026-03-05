@@ -3,8 +3,8 @@
    ========================================================================== */
 
 // Chart instances — created on first render, updated in-place thereafter.
-var paybackChartInst = null;
-var breakdownChartInst = null;
+let paybackChartInst = null;
+let breakdownChartInst = null;
 
 
 // ---------------------------------------------------------------------------
@@ -12,13 +12,13 @@ var breakdownChartInst = null;
 // ---------------------------------------------------------------------------
 
 function debounce(fn, delay) {
-    var timer;
-    var debounced = function () {
-        var args = arguments;
+    let timer;
+    const debounced = function () {
+        const args = arguments;
         clearTimeout(timer);
-        timer = setTimeout(function () { fn.apply(null, args); }, delay);
+        timer = setTimeout(() => { fn.apply(null, args); }, delay);
     };
-    debounced.cancel = function () { clearTimeout(timer); };
+    debounced.cancel = () => { clearTimeout(timer); };
     return debounced;
 }
 
@@ -32,12 +32,12 @@ function fmtNum(n) {
 // ---------------------------------------------------------------------------
 
 function setHtml(id, html) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.innerHTML = html;
 }
 
 function setText(id, text) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.textContent = text;
 }
 
@@ -47,8 +47,8 @@ function setText(id, text) {
 // ---------------------------------------------------------------------------
 
 function applyResults(data) {
-    var liveError = document.getElementById("live-error");
-    var resultsSection = document.getElementById("results");
+    const liveError = document.getElementById("live-error");
+    const resultsSection = document.getElementById("results");
 
     if (data.error) {
         if (liveError) { liveError.textContent = data.error; liveError.style.display = ""; }
@@ -59,11 +59,11 @@ function applyResults(data) {
     if (resultsSection) resultsSection.style.display = "";
 
     // --- Headline card ---
-    var paybackCard = document.getElementById("payback-card");
+    const paybackCard = document.getElementById("payback-card");
     if (paybackCard) {
         if (data.financing_type === "loan") {
-            var mws = data.monthly_payment + data.monthly_utility_bill_with_solar;
-            var savings = data.monthly_bill - mws;
+            const mws = data.monthly_payment + data.monthly_utility_bill_with_solar;
+            const savings = data.monthly_bill - mws;
             paybackCard.innerHTML =
                 '<p class="payback-label">Monthly Cost with Solar</p>' +
                 '<div class="monthly-cost-compare">' +
@@ -97,7 +97,7 @@ function applyResults(data) {
     setText("val-monthly-utility",    "$" + fmtNum(data.monthly_utility_bill_with_solar));
     setText("val-self-consumption",   data.self_consumption_ratio + "%");
 
-    var financingCard = document.getElementById("stat-financing-card");
+    const financingCard = document.getElementById("stat-financing-card");
     if (financingCard) {
         financingCard.innerHTML = data.financing_type === "loan"
             ? '<p class="stat-label">Monthly Loan Payment</p>' +
@@ -128,7 +128,7 @@ function applyResults(data) {
               '<p class="carbon-tons">\u2248 ' + (data.annual_co2_with_solar_lbs / 2205).toFixed(1) +
               ' metric tons</p>');
 
-    var co2Avoided = data.annual_co2_no_solar_lbs - data.annual_co2_with_solar_lbs;
+    const co2Avoided = data.annual_co2_no_solar_lbs - data.annual_co2_with_solar_lbs;
     setHtml("carbon-savings-section",
         co2Avoided > 0
             ? '<div class="carbon-savings"><span class="carbon-savings-badge">' +
@@ -148,24 +148,24 @@ function applyResults(data) {
 // ---------------------------------------------------------------------------
 
 function isFormReady() {
-    var systemKw  = parseFloat(document.getElementById("system_kw").value);
-    var bill      = parseFloat(document.getElementById("monthly_bill").value);
-    var zip       = document.getElementById("zip_code").value.trim();
+    const systemKw  = parseFloat(document.getElementById("system_kw").value);
+    const bill      = parseFloat(document.getElementById("monthly_bill").value);
+    const zip       = document.getElementById("zip_code").value.trim();
     return !isNaN(systemKw) && !isNaN(bill) && zip.length === 5;
 }
 
 async function recalculate() {
     if (!isFormReady()) return;
 
-    var resultsSection = document.getElementById("results");
+    const resultsSection = document.getElementById("results");
     if (resultsSection) resultsSection.classList.add("results-updating");
 
     try {
-        var resp = await fetch("/calculate", {
+        const resp = await fetch("/calculate", {
             method: "POST",
             body: new FormData(document.getElementById("calc-form")),
         });
-        var data = await resp.json();
+        const data = await resp.json();
         applyResults(data);
     } catch (e) {
         // Network error — silently skip; stale results remain visible.
@@ -174,47 +174,47 @@ async function recalculate() {
     }
 }
 
-var debouncedRecalc = debounce(recalculate, 400);
+const debouncedRecalc = debounce(recalculate, 400);
 
 
 // ---------------------------------------------------------------------------
 // DOMContentLoaded: wire up UI interactions
 // ---------------------------------------------------------------------------
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
     // --- Custom battery input visibility ---
-    var batterySelect  = document.getElementById("battery");
-    var customGroup    = document.getElementById("custom-battery-group");
+    const batterySelect  = document.getElementById("battery");
+    const customGroup    = document.getElementById("custom-battery-group");
 
-    function toggleCustom() {
+    const toggleCustom = () => {
         customGroup.style.display = batterySelect.value === "custom" ? "" : "none";
-    }
+    };
     batterySelect.addEventListener("change", toggleCustom);
     toggleCustom();
 
     // --- Loan-specific fields visibility ---
-    var financingRadios = document.querySelectorAll('input[name="financing_type"]');
-    var loanFields      = document.querySelectorAll(".loan-field");
+    const financingRadios = document.querySelectorAll('input[name="financing_type"]');
+    const loanFields      = document.querySelectorAll(".loan-field");
 
-    function toggleLoanFields() {
-        var isCash = document.querySelector('input[name="financing_type"]:checked').value === "cash";
-        loanFields.forEach(function (el) { el.style.display = isCash ? "none" : ""; });
-    }
-    financingRadios.forEach(function (r) { r.addEventListener("change", toggleLoanFields); });
+    const toggleLoanFields = () => {
+        const isCash = document.querySelector('input[name="financing_type"]:checked').value === "cash";
+        loanFields.forEach(el => { el.style.display = isCash ? "none" : ""; });
+    };
+    financingRadios.forEach(r => { r.addEventListener("change", toggleLoanFields); });
     toggleLoanFields();
 
     // --- Live update listeners ---
-    var form     = document.getElementById("calc-form");
-    var zipInput = document.getElementById("zip_code");
+    const form     = document.getElementById("calc-form");
+    const zipInput = document.getElementById("zip_code");
 
     // Number / text inputs (except zip): debounced on every keystroke.
-    form.addEventListener("input", function (e) {
+    form.addEventListener("input", e => {
         if (e.target === zipInput) return;
         debouncedRecalc();
     });
 
     // Selects and radios: respond immediately, cancel any pending debounce.
-    form.addEventListener("change", function (e) {
+    form.addEventListener("change", e => {
         if (e.target.tagName === "SELECT" || e.target.type === "radio") {
             debouncedRecalc.cancel();
             recalculate();
@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Zip: fire on blur once the field is exactly 5 digits.
-    zipInput.addEventListener("blur", function () {
+    zipInput.addEventListener("blur", () => {
         if (zipInput.value.trim().length === 5) {
             debouncedRecalc.cancel();
             recalculate();
@@ -230,9 +230,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Calculate button: immediate recalculate.
-    var calcBtn = document.getElementById("calc-btn");
+    const calcBtn = document.getElementById("calc-btn");
     if (calcBtn) {
-        calcBtn.addEventListener("click", function () {
+        calcBtn.addEventListener("click", () => {
             debouncedRecalc.cancel();
             recalculate();
         });
@@ -249,16 +249,16 @@ document.addEventListener("DOMContentLoaded", function () {
  * @param {Object} data - { years, noSolar, withSolar }
  */
 function renderPaybackChart(data) {
-    var canvas = document.getElementById("payback-chart");
+    const canvas = document.getElementById("payback-chart");
     if (!canvas) return;
 
     // Crossover point (first year no-solar exceeds with-solar)
-    var crossoverIdx = null;
-    for (var i = 1; i < data.years.length; i++) {
+    let crossoverIdx = null;
+    for (let i = 1; i < data.years.length; i++) {
         if (data.noSolar[i] > data.withSolar[i]) { crossoverIdx = i; break; }
     }
-    var noSolarRadius = data.years.map(function () { return 0; });
-    var solarRadius   = data.years.map(function () { return 0; });
+    const noSolarRadius = data.years.map(() => 0);
+    const solarRadius   = data.years.map(() => 0);
     if (crossoverIdx !== null) {
         noSolarRadius[crossoverIdx] = 7;
         solarRadius[crossoverIdx]   = 7;
@@ -276,7 +276,7 @@ function renderPaybackChart(data) {
     paybackChartInst = new Chart(canvas, {
         type: "line",
         data: {
-            labels: data.years.map(function (y) { return "Year " + y; }),
+            labels: data.years.map(y => "Year " + y),
             datasets: [
                 {
                     label: "Without Solar",
@@ -325,13 +325,12 @@ function renderPaybackChart(data) {
                     padding: 12,
                     cornerRadius: 8,
                     callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ": $" +
-                                context.parsed.y.toLocaleString("en-US", {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0,
-                                });
-                        },
+                        label: context =>
+                            context.dataset.label + ": $" +
+                            context.parsed.y.toLocaleString("en-US", {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0,
+                            }),
                     },
                 },
             },
@@ -342,9 +341,7 @@ function renderPaybackChart(data) {
                         font: { family: "'Inter', sans-serif", size: 11 },
                         color: "#A0AEC0",
                         maxTicksLimit: 11,
-                        callback: function (value, index) {
-                            return index % 2 === 0 ? "Yr " + index : "";
-                        },
+                        callback: (value, index) => index % 2 === 0 ? "Yr " + index : "",
                     },
                 },
                 y: {
@@ -352,9 +349,7 @@ function renderPaybackChart(data) {
                     ticks: {
                         font: { family: "'Inter', sans-serif", size: 11 },
                         color: "#A0AEC0",
-                        callback: function (value) {
-                            return value >= 1000 ? "$" + (value / 1000).toFixed(0) + "k" : "$" + value;
-                        },
+                        callback: value => value >= 1000 ? "$" + (value / 1000).toFixed(0) + "k" : "$" + value,
                     },
                 },
             },
@@ -369,7 +364,7 @@ function renderPaybackChart(data) {
  *                          solarCompany10, solarCompany20 }
  */
 function renderBreakdownChart(data) {
-    var canvas = document.getElementById("breakdown-chart");
+    const canvas = document.getElementById("breakdown-chart");
     if (!canvas) return;
 
     if (breakdownChartInst) {
@@ -380,7 +375,7 @@ function renderBreakdownChart(data) {
         return;
     }
 
-    function fmt(v) { return "$" + Math.round(v).toLocaleString("en-US"); }
+    const fmt = v => "$" + Math.round(v).toLocaleString("en-US");
 
     breakdownChartInst = new Chart(canvas, {
         type: "bar",
@@ -433,14 +428,12 @@ function renderBreakdownChart(data) {
                     padding: 12,
                     cornerRadius: 8,
                     callbacks: {
-                        label: function (context) {
-                            return "  " + context.dataset.label + ": " + fmt(context.parsed.y);
-                        },
-                        footer: function (items) {
+                        label: context => "  " + context.dataset.label + ": " + fmt(context.parsed.y),
+                        footer: items => {
                             if (items[0].dataset.stack === "with" && items.length > 0) {
-                                var total = 0;
-                                var idx = items[0].dataIndex;
-                                items[0].chart.data.datasets.forEach(function (ds) {
+                                let total = 0;
+                                const idx = items[0].dataIndex;
+                                items[0].chart.data.datasets.forEach(ds => {
                                     if (ds.stack === "with") total += ds.data[idx] || 0;
                                 });
                                 return "  Total with solar: " + fmt(total);
@@ -462,9 +455,7 @@ function renderBreakdownChart(data) {
                     ticks: {
                         font: { family: "'Inter', sans-serif", size: 11 },
                         color: "#A0AEC0",
-                        callback: function (value) {
-                            return value >= 1000 ? "$" + (value / 1000).toFixed(0) + "k" : "$" + value;
-                        },
+                        callback: value => value >= 1000 ? "$" + (value / 1000).toFixed(0) + "k" : "$" + value,
                     },
                 },
             },

@@ -12,6 +12,7 @@ from data import BASE_SELF_CONSUMPTION, CUSTOM_BATTERY_COST_PER_KWH, NEM3_EXPORT
 # Representative zip codes
 PGE_ZIP = "94025"   # Menlo Park — PG&E territory, prefix 940 → 5.1 peak sun hours
 SCE_ZIP = "90210"   # Beverly Hills — SCE territory, prefix 902 → 5.6 peak sun hours
+SDGE_ZIP = "92101"  # San Diego downtown — SDGE territory, prefix 921 → 5.5 peak sun hours
 INVALID_ZIP = "00001"
 
 
@@ -233,6 +234,23 @@ def test_sce_territory_and_plan():
     r = calculate(8.0, 250, SCE_ZIP, "none")
     assert r.utility == "SCE"
     assert r.plan_name == "TOU-D-Prime"
+
+
+def test_sdge_territory_and_plan():
+    r = calculate(8.0, 250, SDGE_ZIP, "none")
+    assert r.utility == "SDGE"
+    assert r.plan_name == "TOU-DR3"
+
+
+def test_sdge_peak_sun_hours():
+    r = calculate(8.0, 250, SDGE_ZIP, "none")
+    assert r.peak_sun_hours == 5.5
+
+
+def test_sdge_base_charge_floor():
+    """SDGE monthly bill with solar must be at least the SDGE base charge."""
+    r = calculate(8.0, 250, SDGE_ZIP, "none")
+    assert r.monthly_utility_bill_with_solar >= TOU_RATES["SDGE"]["base_charge_monthly"]
 
 
 def test_invalid_zip_raises():

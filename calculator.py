@@ -87,6 +87,8 @@ def calculate(
     if utility is None:
         raise ValueError(f"Zip code {zip_code} is not in a supported CA utility territory.")
     peak_sun_hours = get_peak_sun_hours(zip_code)
+    if peak_sun_hours is None:
+        raise ValueError(f"Zip code {zip_code} is not in a supported CA utility territory.")
     tou = TOU_RATES[utility]
     zero_carbon_pct = tou["zero_carbon_pct"]
     grid_emission_rate = (1 - zero_carbon_pct) * FOSSIL_EMISSION_FACTOR_LBS_KWH
@@ -269,7 +271,7 @@ def calculate(
                 payback_years = (yr - 1) + frac
 
     # ------------------------------------------------------------------
-    # 8. Format payback display
+    # 9. Format payback display
     # ------------------------------------------------------------------
     if payback_years is not None:
         full_years = int(payback_years)
@@ -285,12 +287,12 @@ def calculate(
         payback_display = "20+ years"
 
     # ------------------------------------------------------------------
-    # 9. Offset %
+    # 10. Offset %
     # ------------------------------------------------------------------
     offset_pct = min(100, (annual_production / annual_consumption * 100)) if annual_consumption > 0 else 0
 
     # ------------------------------------------------------------------
-    # 10. Carbon (Year 1 baseline)
+    # 11. Carbon (Year 1 baseline)
     # ------------------------------------------------------------------
     annual_co2_no_solar_lbs = annual_consumption * grid_emission_rate
     net_grid_kwh = max(0.0, annual_consumption - annual_production)

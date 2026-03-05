@@ -23,8 +23,11 @@ CUSTOM_BATTERY_COST_PER_KWH = 900  # $/kWh installed
 _UTILITY_BY_PREFIX = {
     # Southern CA — SCE territory (approximate)
     **{str(p): "SCE" for p in range(900, 909)},
-    **{str(p): "SCE" for p in range(910, 920)},
-    **{str(p): "SCE" for p in range(920, 930)},
+    **{str(p): "SCE" for p in range(910, 919)},
+    # San Diego county — SDGE territory
+    **{str(p): "SDGE" for p in range(919, 922)},
+    # Inland Empire / Palm Springs — SCE territory
+    **{str(p): "SCE" for p in range(922, 930)},
     **{str(p): "SCE" for p in range(930, 936)},
     # Central & Northern CA — PG&E territory
     **{str(p): "PGE" for p in range(936, 967)},
@@ -32,7 +35,7 @@ _UTILITY_BY_PREFIX = {
 
 
 def get_utility(zip_code: str) -> str | None:
-    """Return 'PGE' or 'SCE' for a CA zip code, or None if not found."""
+    """Return 'PGE', 'SCE', or 'SDGE' for a CA zip code, or None if not found."""
     prefix = zip_code[:3]
     return _UTILITY_BY_PREFIX.get(prefix)
 
@@ -46,8 +49,11 @@ _SUN_HOURS_BY_PREFIX = {
     **{str(p): 5.6 for p in range(900, 909)},
     # San Gabriel Valley / Pasadena / Inland
     **{str(p): 5.7 for p in range(910, 920)},
-    # San Diego / Inland Empire area
-    **{str(p): 5.5 for p in range(920, 926)},
+    # San Diego county (SDGE)
+    **{str(p): 5.7 for p in range(919, 920)},  # inland San Diego (El Cajon, Santee)
+    **{str(p): 5.5 for p in range(920, 922)},  # coastal San Diego
+    # Inland Empire / Palm Springs
+    **{str(p): 5.5 for p in range(922, 926)},
     **{str(p): 5.8 for p in range(926, 930)},
     # Central Coast (SLO, Santa Barbara)
     **{str(p): 5.3 for p in range(930, 936)},
@@ -92,6 +98,14 @@ TOU_RATES = {
         "weighted_avg": 0.35,
         "zero_carbon_pct": 0.49,  # 49% zero-carbon (CEC 2024 Power Content Label)
         "base_charge_monthly": 10.00,  # SCE minimum monthly customer charge
+    },
+    "SDGE": {
+        "plan_name": "TOU-DR3",
+        "peak": 0.64,           # 4–9 PM
+        "offpeak": 0.40,
+        "weighted_avg": 0.50,
+        "zero_carbon_pct": 0.45,  # 45% zero-carbon (CEC 2024 Power Content Label)
+        "base_charge_monthly": 17.00,  # SDG&E minimum monthly customer charge
     },
 }
 
